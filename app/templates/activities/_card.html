@@ -1,0 +1,22 @@
+<article class="card">
+  <div class="card-head">
+    <h3 class="card-title">
+      <a href="{{ url_for('activities.detail', activity_id=a.id) }}">{{ a.title }}</a>
+    </h3>
+    <span class="badge badge-{{ a.status }}">{{ a.status_label }}</span>
+  </div>
+
+  <p class="card-summary">{{ a.summary or "（暂无简介）" }}</p>
+
+  <ul class="card-meta">
+    <li><span>时间</span><span>{{ a.start_time.strftime('%m-%d %H:%M') }} ~ {{ a.end_time.strftime('%m-%d %H:%M') }}</span></li>
+    <li><span>地点</span><span>{{ a.location }}</span></li>
+    <li><span>报名截止</span><span>{{ a.signup_deadline.strftime('%m-%d %H:%M') }}</span></li>
+    <li><span>已报名</span><span>{{ a.registered_count }} / {{ a.capacity_label }}</span></li>
+  </ul>
+
+  <div class="card-foot">
+    <span class="badge badge-plain">{{ a.category.name if a.category else "未分类" }}</span>
+    <a class="btn btn-ghost btn-sm" href="{{ url_for('activities.detail', activity_id=a.id) }}">查看详情</a>
+  </div>
+</article>

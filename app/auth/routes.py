@@ -55,7 +55,7 @@ def _validate_registration(form) -> list:
 @auth_bp.route("/register", methods=["GET", "POST"])
 def register():
     if current_user.is_authenticated:
-        return redirect(url_for("main.index"))
+        return redirect(url_for("activities.list_activities"))
 
     form = request.form
     if request.method == "POST":
@@ -83,7 +83,7 @@ def register():
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for("main.index"))
+        return redirect(url_for("activities.list_activities"))
 
     if request.method == "POST":
         username = (request.form.get("username") or "").strip()
@@ -99,7 +99,7 @@ def login():
             next_url = request.args.get("next") or request.form.get("next")
             if next_url and next_url.startswith("/") and not next_url.startswith("//"):
                 return redirect(next_url)
-            return redirect(url_for("main.index"))
+            return redirect(url_for("activities.list_activities"))
 
     return render_template("auth/login.html", next=request.args.get("next", ""))
 
@@ -109,4 +109,4 @@ def login():
 def logout():
     logout_user()
     flash("已退出登录。", "info")
-    return redirect(url_for("main.index"))
+    return redirect(url_for("activities.list_activities"))

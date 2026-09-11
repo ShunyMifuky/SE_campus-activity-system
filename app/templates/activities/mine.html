@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}我的活动 · 校园活动管理系统{% endblock %}
+
+{% block content %}
+<div class="section-title">
+  <h2>我发布的活动</h2>
+  <a class="btn btn-primary btn-sm" href="{{ url_for('activities.create') }}">发布活动</a>
+</div>
+
+{% if activities %}
+  <div class="table-wrap panel">
+    <table class="data">
+      <thead>
+        <tr>
+          <th>活动名称</th>
+          <th>分类</th>
+          <th>活动时间</th>
+          <th>报名截止</th>
+          <th>已报名 / 上限</th>
+          <th>状态</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in activities %}
+          <tr>
+            <td><a href="{{ url_for('activities.detail', activity_id=a.id) }}">{{ a.title }}</a></td>
+            <td>{{ a.category.name if a.category else "未分类" }}</td>
+            <td>{{ a.start_time.strftime('%Y-%m-%d %H:%M') }}</td>
+            <td>{{ a.signup_deadline.strftime('%Y-%m-%d %H:%M') }}</td>
+            <td class="num">{{ a.registered_count }} / {{ a.capacity_label }}</td>
+            <td><span class="badge badge-{{ a.status }}">{{ a.status_label }}</span></td>
+            <td>
+              <a class="btn btn-ghost btn-sm" href="{{ url_for('activities.edit', activity_id=a.id) }}">编辑</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="panel empty-state">
+    <h2>你还没有发布过活动</h2>
+    <p>发布活动后，学生就能在活动列表中看到并报名。</p>
+    <a class="btn btn-primary" href="{{ url_for('activities.create') }}">发布活动</a>
+  </div>
+{% endif %}
+{% endblock %}

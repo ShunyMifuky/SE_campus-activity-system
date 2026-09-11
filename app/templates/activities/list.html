@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}活动列表 · 校园活动管理系统{% endblock %}
+
+{% block content %}
+<div class="section-title">
+  <h2>校园活动</h2>
+  {% if current_user.is_authenticated and current_user.is_teacher %}
+    <a class="btn btn-primary btn-sm" href="{{ url_for('activities.create') }}">发布活动</a>
+  {% endif %}
+</div>
+
+<div class="toolbar">
+  <form method="get" action="{{ url_for('activities.list_activities') }}">
+    <label class="field field-grow">
+      <span class="field-label">关键词</span>
+      <input type="search" name="q" value="{{ filters.q }}" placeholder="活动名称 / 地点 / 简介">
+    </label>
+
+    <label class="field field-sm">
+      <span class="field-label">分类</span>
+      <select name="category">
+        <option value="">全部分类</option>
+        {% for c in categories %}
+          <option value="{{ c.id }}" {% if filters.category == c.id|string %}selected{% endif %}>{{ c.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+
+    <label class="field field-sm">
+      <span class="field-label">状态</span>
+      <select name="status">
+        <option value="">全部（不含已下架）</option>
+        {% for value, label in STATUS_LABELS.items() %}
+          <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+
+    <button class="btn btn-primary" type="submit">筛选</button>
+    <a class="btn btn-ghost" href="{{ url_for('activities.list_activities') }}">重置</a>
+  </form>
+</div>
+
+{% if activities %}
+  <div class="activity-grid">
+    {% for a in activities %}
+      {% include "activities/_card.html" %}
+    {% endfor %}
+  </div>
+  <p class="hint">共 {{ activities|length }} 个活动。</p>
+{% else %}
+  <div class="panel empty-state">
+    <h2>没有符合条件的活动</h2>
+    <p>可以尝试调整筛选条件，或者清空关键词后重新查询。</p>
+    {% if current_user.is_authenticated and current_user.is_teacher %}
+      <a class="btn btn-primary" href="{{ url_for('activities.create') }}">发布第一个活动</a>
+    {% endif %}
+  </div>
+{% endif %}
+{% endblock %}

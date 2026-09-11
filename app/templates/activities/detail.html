@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}{{ activity.title }} · 校园活动管理系统{% endblock %}
+
+{% block content %}
+<div class="panel">
+  <div class="detail-head">
+    <div>
+      <h1>{{ activity.title }}</h1>
+      <div>
+        <span class="badge badge-{{ activity.status }}">{{ activity.status_label }}</span>
+        <span class="badge badge-plain">{{ activity.category.name if activity.category else "未分类" }}</span>
+      </div>
+    </div>
+
+    {% if current_user.is_authenticated and current_user.id == activity.creator_id %}
+      <div class="form-actions" style="margin:0;padding:0;border:0;">
+        <a class="btn btn-ghost" href="{{ url_for('activities.edit', activity_id=activity.id) }}">编辑活动</a>
+        {% if activity.canceled_at is none %}
+          <form method="post" action="{{ url_for('activities.cancel', activity_id=activity.id) }}"
+                onsubmit="return confirm('确定要下架该活动吗？下架后学生将无法报名。');">
+            <button class="btn btn-danger" type="submit">下架活动</button>
+          </form>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+
+  <ul class="detail-meta">
+    <li>活动时间：<b>{{ activity.start_time.strftime('%Y-%m-%d %H:%M') }} ~ {{ activity.end_time.strftime('%Y-%m-%d %H:%M') }}</b></li>
+    <li>活动地点：<b>{{ activity.location }}</b></li>
+    <li>报名截止：<b>{{ activity.signup_deadline.strftime('%Y-%m-%d %H:%M') }}</b></li>
+    <li>发布教师：<b>{{ activity.creator.real_name }}</b></li>
+  </ul>
+
+  <div class="detail-body">{{ activity.summary or "（暂无活动简介）" }}</div>
+</div>
+
+<div class="panel">
+  <h2>报名情况</h2>
+  <div class="stat-row">
+    <div class="stat">
+      <div class="stat-label">已报名</div>
+      <div class="stat-value">{{ activity.registered_count }}</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">人数上限</div>
+      <div class="stat-value">{{ activity.capacity_label }}</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">剩余名额</div>
+      <div class="stat-value">{{ activity.remaining if activity.remaining is not none else "不限" }}</div>
+    </div>
+  </div>
+
+  <p class="hint">报名入口将在下一步接入。</p>
+</div>
+{% endblock %}

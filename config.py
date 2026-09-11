@@ -20,6 +20,3 @@ class Config:
 
     # 会话保持 8 小时，便于测试期间反复登录
     PERMANENT_SESSION_LIFETIME = 60 * 60 * 8
-
-    # 活动列表默认分页大小
-    ACTIVITY_PER_PAGE = 10

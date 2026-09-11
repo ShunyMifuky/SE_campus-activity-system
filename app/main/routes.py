@@ -1,13 +1,11 @@
-"""首页与可用性探针。"""
+"""运维与探针接口。
 
-from flask import Blueprint, render_template
+说明：首页由活动列表承担（REQ-04），因此本模块只保留可用性探针。
+"""
+
+from flask import Blueprint
 
 main_bp = Blueprint("main", __name__)
-
-
-@main_bp.route("/")
-def index():
-    return render_template("index.html")
 
 
 @main_bp.route("/healthz")

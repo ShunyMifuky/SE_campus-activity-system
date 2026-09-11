@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}{{ "编辑活动" if activity else "发布活动" }} · 校园活动管理系统{% endblock %}
+
+{% block content %}
+<div class="section-title">
+  <h2>{{ "编辑活动" if activity else "发布活动" }}</h2>
+  <a class="btn btn-ghost btn-sm" href="{{ url_for('activities.mine') }}">返回我的活动</a>
+</div>
+
+<div class="panel">
+  <form method="post"
+        action="{{ url_for('activities.edit', activity_id=activity.id) if activity else url_for('activities.create') }}">
+
+    <div class="form-grid">
+      <label class="field full">
+        <span class="field-label">活动名称 <i>必填，不超过 120 字</i></span>
+        <input type="text" name="title" value="{{ values.title }}" required maxlength="120">
+      </label>
+
+      <label class="field">
+        <span class="field-label">活动分类</span>
+        <select name="category_id">
+          <option value="">暂不分类</option>
+          {% for c in categories %}
+            <option value="{{ c.id }}" {% if values.category_id == c.id|string %}selected{% endif %}>{{ c.name }}</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label class="field">
+        <span class="field-label">活动地点 <i>必填</i></span>
+        <input type="text" name="location" value="{{ values.location }}" required maxlength="120">
+      </label>
+
+      <label class="field">
+        <span class="field-label">活动开始时间 <i>必填</i></span>
+        <input type="datetime-local" name="start_time" value="{{ values.start_time }}" required>
+      </label>
+
+      <label class="field">
+        <span class="field-label">活动结束时间 <i>须晚于开始时间</i></span>
+        <input type="datetime-local" name="end_time" value="{{ values.end_time }}" required>
+      </label>
+
+      <label class="field">
+        <span class="field-label">报名截止时间 <i>不得晚于开始时间</i></span>
+        <input type="datetime-local" name="signup_deadline" value="{{ values.signup_deadline }}" required>
+      </label>
+
+      <label class="field">
+        <span class="field-label">人数上限 <i>0 表示不限人数</i></span>
+        <input type="number" name="capacity" value="{{ values.capacity }}" min="0" step="1">
+      </label>
+
+      <label class="field full">
+        <span class="field-label">活动简介</span>
+        <textarea name="summary" maxlength="500"
+                  placeholder="活动内容、参与对象、需要携带的物品等">{{ values.summary }}</textarea>
+      </label>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">{{ "保存修改" if activity else "发布活动" }}</button>
+      <a class="btn btn-ghost" href="{{ url_for('activities.detail', activity_id=activity.id) if activity else url_for('activities.list_activities') }}">取消</a>
+      {% if activity %}
+        <span class="hint" style="margin:0;">当前已报名 {{ activity.registered_count }} 人，人数上限不能低于该数量。</span>
+      {% endif %}
+    </div>
+  </form>
+</div>
+{% endblock %}

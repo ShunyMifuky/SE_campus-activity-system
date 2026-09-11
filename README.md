@@ -47,7 +47,29 @@ python run.py
 
 数据库文件位于 `instance/campus.db`，已被 `.gitignore` 排除，不会进入版本库。
 
-## 四、目录结构
+`python -m app.seed` 会幂等写入 5 个活动分类、6 个演示账号与 3 个示例活动。
+演示账号的登录口令统一为 `Demo@2026`，角色分布如下：
+
+| 账号 | 姓名 | 角色 |
+|---|---|---|
+| `wangtairan` | 王泰然 | 活动组织教师 |
+| `tangjiahan` | 唐佳涵 | 活动组织教师 |
+| `linxiangyu` | 林翔宇 | 学生 |
+| `chenjiahe` | 陈嘉禾 | 学生 |
+| `zhaoyiming` | 赵一鸣 | 学生 |
+| `sunxiao` | 孙晓 | 学生 |
+
+## 四、验证方式
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+共 30 条断言，覆盖 TEST-01 ~ TEST-06 六条用例及"服务重启后数据仍存在"的完成依据。
+每条用例使用独立的临时数据库，只通过 HTTP 接口访问系统。
+详细结果见 `docs/04-验证报告.md`。
+
+## 五、目录结构
 
 ```
 campus-activity-system/
@@ -70,7 +92,7 @@ campus-activity-system/
 └── requirements.txt
 ```
 
-## 五、文档索引
+## 六、文档索引
 
 | 文档 | 内容 |
 |---|---|
@@ -79,7 +101,7 @@ campus-activity-system/
 | `docs/03-软件设计.md` | 总体结构、核心业务流程、数据设计、关键决策 |
 | `docs/04-验证报告.md` | TEST-01~06 验证结果与缺陷修复记录 |
 
-## 六、版本管理说明
+## 七、版本管理说明
 
 项目从建立初期即纳入 Git 管理，按「模块逐步成形」的节奏提交，
 每次提交对应一个可说明的增量。
@@ -92,7 +114,7 @@ git remote add origin <仓库地址>
 git push -u origin main
 ```
 
-## 七、安全约定
+## 八、安全约定
 
 - 密码使用 Werkzeug 哈希存储，**任何位置不留明文**
 - 密钥通过环境变量 `SECRET_KEY` 注入，仓库内只保留开发用默认值

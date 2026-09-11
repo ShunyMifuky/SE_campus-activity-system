@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}无权访问 · 校园活动管理系统{% endblock %}
+
+{% block content %}
+<div class="panel empty-state">
+  <h2>403 · 无权访问</h2>
+  <p>当前账号的角色没有访问该功能的权限。</p>
+  <p class="hint">
+    学生账号只能浏览活动与报名；发布和管理活动需要以「活动组织教师」身份登录。
+  </p>
+  <a class="btn btn-primary" href="{{ url_for('main.index') }}">返回首页</a>
+</div>
+{% endblock %}

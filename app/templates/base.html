@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}校园活动管理系统 V1.0{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="{{ url_for('main.index') }}">
+      <span class="brand-mark">校</span>
+      <span class="brand-text">校园活动管理系统<em>V1.0</em></span>
+    </a>
+
+    <nav class="nav">
+      <a href="{{ url_for('main.index') }}">首页</a>
+    </nav>
+
+    <div class="user-area">
+      {% if current_user.is_authenticated %}
+        <span class="user-chip">
+          {{ current_user.real_name }}
+          <small>{{ current_user.role_label }}</small>
+        </span>
+        <a class="btn btn-ghost btn-sm" href="{{ url_for('auth.logout') }}">退出</a>
+      {% else %}
+        <a class="btn btn-ghost btn-sm" href="{{ url_for('auth.login') }}">登录</a>
+        <a class="btn btn-primary btn-sm" href="{{ url_for('auth.register') }}">注册</a>
+      {% endif %}
+    </div>
+  </div>
+</header>
+
+<main class="container page">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-stack">
+        {% for category, message in messages %}
+          <div class="flash flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    校园活动管理系统 V1.0 · 实验一 基于工程意图的软件迭代开发 ·
+    小组：林翔宇 / 王泰然 / 唐佳涵
+  </div>
+</footer>
+</body>
+</html>

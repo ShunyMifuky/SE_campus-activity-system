@@ -1,13 +1,8 @@
-"""校园活动管理系统 V1.0 —— 应用工厂。
-
-V1.0 采用「单体应用 + 服务端渲染」结构，首要目标是把
-「教师发布活动 → 学生浏览并报名」这条基本业务闭环真实跑通，
-因此应用装配逻辑集中在 create_app()，便于按模块逐步接入 Blueprint。
-"""
+"""蓝图注册与全局错误处理。"""
 
 import os
 
-from flask import Flask
+from flask import Flask, render_template
 
 from .extensions import db, login_manager
 
@@ -22,12 +17,36 @@ def create_app(config_object="config.Config"):
     db.init_app(app)
     login_manager.init_app(app)
 
-    @app.route("/healthz")
-    def healthz():
-        """最小可用性探针，供开发与验证阶段确认服务已启动。"""
-        return {"status": "ok", "app": "校园活动管理系统", "version": "V1.0"}
+    from .auth import auth_bp
+    from .main import main_bp
+
+    app.register_blueprint(main_bp)
+    app.register_blueprint(auth_bp, url_prefix="/auth")
+
+    _register_error_handlers(app)
+    _register_template_helpers(app)
 
     with app.app_context():
         db.create_all()
 
     return app
+
+
+def _register_error_handlers(app: Flask) -> None:
+    @app.errorhandler(403)
+    def forbidden(error):  # noqa: ARG001
+        return render_template("errors/403.html"), 403
+
+    @app.errorhandler(404)
+    def not_found(error):  # noqa: ARG001
+        return render_template("errors/404.html"), 404
+
+
+def _register_template_helpers(app: Flask) -> None:
+    """把模型中的状态标签注入模板，避免在 HTML 里硬编码中文业务文案。"""
+
+    @app.context_processor
+    def inject_labels():
+        from .models import ROLE_LABELS, STATUS_LABELS
+
+        return {"ROLE_LABELS": ROLE_LABELS, "STATUS_LABELS": STATUS_LABELS}

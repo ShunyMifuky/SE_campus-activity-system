@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}注册 · 校园活动管理系统{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+  <div class="panel auth-card">
+    <h2>注册账号</h2>
+    <p class="hint">请选择与本人身份一致的角色，角色决定登录后可使用的功能。</p>
+
+    <form method="post" action="{{ url_for('auth.register') }}">
+      <label class="field">
+        <span class="field-label">账号 <i>3~50 个字符</i></span>
+        <input type="text" name="username" value="{{ request.form.get('username', '') }}" required>
+      </label>
+
+      <label class="field">
+        <span class="field-label">姓名</span>
+        <input type="text" name="real_name" value="{{ request.form.get('real_name', '') }}" required>
+      </label>
+
+      <label class="field">
+        <span class="field-label">学号 / 工号 <i>报名名单中展示</i></span>
+        <input type="text" name="student_no" value="{{ request.form.get('student_no', '') }}">
+      </label>
+
+      <label class="field">
+        <span class="field-label">身份</span>
+        <select name="role">
+          {% for value, label in roles.items() %}
+            <option value="{{ value }}"
+              {% if request.form.get('role') == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label class="field">
+        <span class="field-label">密码 <i>不少于 6 位</i></span>
+        <input type="password" name="password" required>
+      </label>
+
+      <label class="field">
+        <span class="field-label">确认密码</span>
+        <input type="password" name="confirm_password" required>
+      </label>
+
+      <button type="submit" class="btn btn-primary btn-block">注册</button>
+    </form>
+
+    <p class="auth-switch">已有账号？<a href="{{ url_for('auth.login') }}">前往登录</a></p>
+  </div>
+</div>
+{% endblock %}

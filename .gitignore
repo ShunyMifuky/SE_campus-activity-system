@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# 虚拟环境
+.venv/
+venv/
+env/
+
+# 运行期数据：SQLite 数据库文件不进入版本库
+instance/
+*.db
+*.sqlite
+*.sqlite3
+
+# 环境变量与密钥（严禁提交真实密码 / Token / 私钥）
+.env
+.env.*
+*.pem
+*.key
+
+# 编辑器
+.idea/
+.vscode/
+*.swp
+.DS_Store

@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}{{ activity.title }} · 报名名单{% endblock %}
+
+{% block content %}
+<div class="section-title">
+  <h2>{{ activity.title }} · 报名名单</h2>
+  <a class="btn btn-ghost btn-sm" href="{{ url_for('activities.detail', activity_id=activity.id) }}">返回活动详情</a>
+</div>
+
+<div class="stat-row">
+  <div class="stat">
+    <div class="stat-label">已报名人数</div>
+    <div class="stat-value">{{ activity.registered_count }}</div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">人数上限</div>
+    <div class="stat-value">{{ activity.capacity_label }}</div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">剩余名额</div>
+    <div class="stat-value">{{ activity.remaining if activity.remaining is not none else "不限" }}</div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">活动状态</div>
+    <div class="stat-value" style="font-size:16px;">
+      <span class="badge badge-{{ activity.status }}">{{ activity.status_label }}</span>
+    </div>
+  </div>
+</div>
+
+{% if registrations %}
+  <div class="table-wrap panel">
+    <table class="data">
+      <thead>
+        <tr>
+          <th>序号</th>
+          <th>姓名</th>
+          <th>学号</th>
+          <th>账号</th>
+          <th>报名时间</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in registrations %}
+          <tr>
+            <td class="num">{{ loop.index }}</td>
+            <td>{{ r.user.real_name }}</td>
+            <td>{{ r.user.student_no or "—" }}</td>
+            <td>{{ r.user.username }}</td>
+            <td>{{ r.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="hint">
+    共 {{ registrations|length }} 人报名。
+    {% if activity.remaining is not none %}剩余 {{ activity.remaining }} 个名额。{% endif %}
+  </p>
+{% else %}
+  <div class="panel empty-state">
+    <h2>暂时还没有学生报名</h2>
+    <p>活动已经在活动列表中展示，学生可以直接报名。</p>
+  </div>
+{% endif %}
+
+<div class="panel">
+  <h2>关键操作记录 <span class="sub">最近 {{ logs|length }} 条</span></h2>
+  {% if logs %}
+    <div class="table-wrap">
+      <table class="data">
+        <thead>
+          <tr>
+            <th>时间</th>
+            <th>操作人</th>
+            <th>操作</th>
+            <th>说明</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in logs %}
+            <tr>
+              <td>{{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+              <td>{{ log.actor.real_name if log.actor else "—" }}</td>
+              <td>{{ log.action }}</td>
+              <td>{{ log.detail }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="hint">暂无操作记录。</p>
+  {% endif %}
+</div>
+{% endblock %}

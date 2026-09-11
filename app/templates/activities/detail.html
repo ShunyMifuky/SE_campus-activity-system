@@ -14,6 +14,7 @@
 
     {% if current_user.is_authenticated and current_user.id == activity.creator_id %}
       <div class="form-actions" style="margin:0;padding:0;border:0;">
+        <a class="btn btn-ghost" href="{{ url_for('registrations.roster', activity_id=activity.id) }}">报名名单</a>
         <a class="btn btn-ghost" href="{{ url_for('activities.edit', activity_id=activity.id) }}">编辑活动</a>
         {% if activity.canceled_at is none %}
           <form method="post" action="{{ url_for('activities.cancel', activity_id=activity.id) }}"

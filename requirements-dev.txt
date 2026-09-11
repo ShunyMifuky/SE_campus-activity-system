@@ -1,0 +1,8 @@
+# 开发辅助脚本的依赖 —— 不属于 V1.0 运行时依赖
+#
+# 用于 scripts/capture_screenshots.py（生成报告用界面截图）
+# 与 scripts/make_diagrams.py（把设计图 SVG 渲染成 PNG）：
+#     pip install -r requirements-dev.txt
+#
+# 两个脚本都通过 Playwright 复用本机已安装的 Chrome，不额外下载浏览器内核。
+playwright>=1.40

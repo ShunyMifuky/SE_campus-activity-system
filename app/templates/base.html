@@ -20,6 +20,9 @@
         <a href="{{ url_for('activities.mine') }}">我的活动</a>
         <a href="{{ url_for('activities.create') }}">发布活动</a>
       {% endif %}
+      {% if current_user.is_authenticated and current_user.is_student %}
+        <a href="{{ url_for('registrations.mine') }}">我的报名</a>
+      {% endif %}
     </nav>
 
     <div class="user-area">

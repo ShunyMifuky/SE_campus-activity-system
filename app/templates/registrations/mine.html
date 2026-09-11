@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}我的报名 · 校园活动管理系统{% endblock %}
+
+{% block content %}
+<div class="section-title">
+  <h2>我的报名</h2>
+  <a class="btn btn-ghost btn-sm" href="{{ url_for('activities.list_activities') }}">浏览更多活动</a>
+</div>
+
+{% if registrations %}
+  <div class="table-wrap panel">
+    <table class="data">
+      <thead>
+        <tr>
+          <th>活动名称</th>
+          <th>活动时间</th>
+          <th>活动地点</th>
+          <th>报名时间</th>
+          <th>活动状态</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in registrations %}
+          {% set a = r.activity %}
+          <tr>
+            <td><a href="{{ url_for('activities.detail', activity_id=a.id) }}">{{ a.title }}</a></td>
+            <td>{{ a.start_time.strftime('%Y-%m-%d %H:%M') }}</td>
+            <td>{{ a.location }}</td>
+            <td>{{ r.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+            <td><span class="badge badge-{{ a.status }}">{{ a.status_label }}</span></td>
+            <td>
+              <form method="post" action="{{ url_for('registrations.cancel_signup', activity_id=a.id) }}"
+                    onsubmit="return confirm('确定要取消报名吗？');">
+                <button class="btn btn-danger btn-sm" type="submit">取消报名</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="hint">共 {{ registrations|length }} 条报名记录。</p>
+{% else %}
+  <div class="panel empty-state">
+    <h2>你还没有报名任何活动</h2>
+    <p>到活动列表看看有哪些正在进行报名的活动吧。</p>
+    <a class="btn btn-primary" href="{{ url_for('activities.list_activities') }}">浏览活动</a>
+  </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,28 @@
+{% if current_user.is_authenticated and current_user.is_student %}
+  {% if activity.has_registration_of(current_user) %}
+    <div class="flash flash-success">你已成功报名该活动，请按时参加。</div>
+    <form method="post" action="{{ url_for('registrations.cancel_signup', activity_id=activity.id) }}"
+          onsubmit="return confirm('确定要取消报名吗？取消后名额将释放给其他同学。');">
+      <button class="btn btn-danger" type="submit">取消报名</button>
+    </form>
+
+  {% elif activity.is_signup_open %}
+    <form method="post" action="{{ url_for('registrations.signup', activity_id=activity.id) }}">
+      <button class="btn btn-primary" type="submit">立即报名</button>
+    </form>
+
+  {% else %}
+    <p class="hint">
+      该活动当前不可报名：{{ activity.status_label }}{% if activity.is_full %}，名额已满{% endif %}。
+    </p>
+  {% endif %}
+
+{% elif current_user.is_authenticated %}
+  <p class="hint">教师账号用于发布和管理活动，不参与报名。</p>
+
+{% else %}
+  <p class="hint">
+    报名需要先登录学生账号。
+    <a href="{{ url_for('auth.login', next=request.path) }}">前往登录</a>
+  </p>
+{% endif %}

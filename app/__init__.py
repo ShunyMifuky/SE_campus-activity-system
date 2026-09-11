@@ -20,10 +20,12 @@ def create_app(config_object="config.Config"):
     from .activities import activities_bp
     from .auth import auth_bp
     from .main import main_bp
+    from .registrations import registrations_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp, url_prefix="/auth")
     app.register_blueprint(activities_bp)
+    app.register_blueprint(registrations_bp)
 
     _register_error_handlers(app)
     _register_template_helpers(app)

@@ -9,7 +9,7 @@
 from flask import Blueprint, abort, flash, redirect, render_template, url_for
 from flask_login import current_user
 
-from ..decorators import student_required, teacher_required
+from ..decorators import ensure_resource_owner, student_required, teacher_required
 from ..extensions import db
 from ..models import Activity, OperationLog
 from ..services import registration_service
@@ -57,6 +57,7 @@ def mine():
 def roster(activity_id: int):
     """教师查看某活动的报名名单与名额统计（REQ-06）。"""
     activity = _get_activity_or_404(activity_id)
+    ensure_resource_owner(activity)  # 约束 C3：报名名单只对活动发布者开放
 
     # 名单按报名先后排序，便于教师按顺序通知或分组
     registrations = sorted(activity.registrations, key=lambda r: (r.created_at, r.id))

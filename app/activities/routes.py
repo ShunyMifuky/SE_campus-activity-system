@@ -9,7 +9,7 @@
 from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
 from flask_login import current_user
 
-from ..decorators import teacher_required
+from ..decorators import ensure_resource_owner, teacher_required
 from ..extensions import db
 from ..models import (
     FILTERABLE_STATUSES,
@@ -115,6 +115,7 @@ def edit(activity_id: int):
     activity = db.session.get(Activity, activity_id)
     if activity is None:
         abort(404)
+    ensure_resource_owner(activity)  # 约束 C3：只能修改自己发布的活动
 
     if request.method == "POST":
         errors = activity_service.update_activity(activity, current_user, request.form)
@@ -144,6 +145,7 @@ def cancel(activity_id: int):
     activity = db.session.get(Activity, activity_id)
     if activity is None:
         abort(404)
+    ensure_resource_owner(activity)  # 约束 C3：只能下架自己发布的活动
 
     errors = activity_service.cancel_activity(activity, current_user)
     if errors:

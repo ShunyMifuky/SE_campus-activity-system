@@ -53,3 +53,14 @@ def student_required(view):
     from .models import ROLE_STUDENT
 
     return role_required(ROLE_STUDENT)(view)
+
+
+def ensure_resource_owner(resource, owner_field: str = "creator_id") -> None:
+    """资源归属校验（约束 C3 的后半段）。
+
+    角色校验只能回答"是不是教师"，回答不了"这是不是你的活动"。
+    只做角色校验时，任何教师只要把 URL 里的活动 id 换成别人的，
+    就能编辑、下架或查看他人活动的报名名单——因此归属必须单独校验。
+    """
+    if resource is None or getattr(resource, owner_field, None) != current_user.id:
+        abort(403)

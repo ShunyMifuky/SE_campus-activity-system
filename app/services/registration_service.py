@@ -7,7 +7,7 @@
 from sqlalchemy.exc import IntegrityError
 
 from ..extensions import db
-from ..models import ROLE_STUDENT, STATUS_CANCELED, Registration, log_operation
+from ..models import ROLE_STUDENT, STATUS_CANCELED, Registration, log_operation, now
 
 
 def signup(activity, user):
@@ -19,6 +19,13 @@ def signup(activity, user):
     # 活动必须处于可报名状态（已下架的活动不可报名）
     if activity.status == STATUS_CANCELED:
         return False, "该活动已下架，无法报名。"
+
+    # 报名截止校验（约束 C2）
+    # 页面在截止后会隐藏报名按钮，但按钮隐藏只是体验，不能当作规则：
+    # 直接向报名接口提交请求同样必须被拒绝。
+    if now() > activity.signup_deadline:
+        deadline_text = activity.signup_deadline.strftime("%Y-%m-%d %H:%M")
+        return False, f"该活动报名已截止（截止时间 {deadline_text}），无法报名。"
 
     # 重复报名校验
     # 注意：这一项必须排在名额校验之前。若本人已报名且恰好占满了最后一个名额，

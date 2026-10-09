@@ -18,6 +18,8 @@ MAX_TITLE_LENGTH = 120
 MAX_SUMMARY_LENGTH = 500
 MAX_LOCATION_LENGTH = 120
 MAX_CAPACITY = 100000
+# V2.0：参加资格说明的长度上限（R-08）
+MAX_ELIGIBILITY_LENGTH = 200
 
 
 def parse_datetime(raw_value, label: str, errors: list):
@@ -94,6 +96,14 @@ def collect_activity_form(form):
     if start_time and deadline and deadline > start_time:
         errors.append("报名截止时间不能晚于活动开始时间。")
 
+    # V2.0 新增：是否需要审核（R-04）与参加资格说明（R-08）
+    # 表单里的 checkbox 未勾选时不会提交该字段，因此按"存在即为真"判断；
+    # 默认 False —— 不勾选就保持 V1.0 的直接生效行为。
+    requires_review = (form.get("requires_review") or "").strip() not in ("", "0", "false")
+    eligibility_note = (form.get("eligibility_note") or "").strip()
+    if len(eligibility_note) > MAX_ELIGIBILITY_LENGTH:
+        errors.append(f"参加资格说明不能超过 {MAX_ELIGIBILITY_LENGTH} 个字符。")
+
     payload = {
         "title": title,
         "summary": summary,
@@ -103,6 +113,8 @@ def collect_activity_form(form):
         "end_time": end_time,
         "signup_deadline": deadline,
         "capacity": capacity,
+        "requires_review": requires_review,
+        "eligibility_note": eligibility_note,
     }
     return payload, errors
 
@@ -134,10 +146,12 @@ def update_activity(activity, actor, form):
     if errors:
         return errors
 
-    # 人数上限不能被改到小于当前已报名人数，否则会出现"已超额"的矛盾状态
+    # 人数上限不能被改到小于当前正式参加人数，否则会出现"已超额"的矛盾状态。
+    # V2.0 口径（设计决策 D7）：只有「已通过」的记录占用名额，
+    # 待审核与候补中的记录不计入。
     new_capacity = payload["capacity"]
-    if new_capacity and new_capacity < activity.registered_count:
-        return [f"人数上限不能小于当前已报名人数（{activity.registered_count} 人）。"]
+    if new_capacity and new_capacity < activity.approved_count:
+        return [f"人数上限不能小于当前正式参加人数（{activity.approved_count} 人）。"]
 
     for field, value in payload.items():
         setattr(activity, field, value)
@@ -189,6 +203,14 @@ def form_values(activity=None, form=None) -> dict:
                 return str(value)
         return default
 
+    # 是否需要审核是 checkbox：未勾选时表单不会提交该字段，
+    # 因此不能用上面的 pick（pick 会把"没提交"当成"用活动现有值"，
+    # 导致用户取消勾选后仍然保持 True）。
+    if form:
+        requires_review = bool(form.get("requires_review"))
+    else:
+        requires_review = bool(getattr(activity, "requires_review", False))
+
     return {
         "title": pick("title"),
         "summary": pick("summary"),
@@ -198,4 +220,6 @@ def form_values(activity=None, form=None) -> dict:
         "end_time": pick("end_time"),
         "signup_deadline": pick("signup_deadline"),
         "capacity": pick("capacity", "0"),
+        "requires_review": requires_review,
+        "eligibility_note": pick("eligibility_note"),
     }

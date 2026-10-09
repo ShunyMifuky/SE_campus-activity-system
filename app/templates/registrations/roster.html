@@ -9,8 +9,8 @@
 
 <div class="stat-row">
   <div class="stat">
-    <div class="stat-label">已报名人数</div>
-    <div class="stat-value">{{ activity.registered_count }}</div>
+    <div class="stat-label">正式参加</div>
+    <div class="stat-value">{{ activity.approved_count }}</div>
   </div>
   <div class="stat">
     <div class="stat-label">人数上限</div>
@@ -21,6 +21,14 @@
     <div class="stat-value">{{ activity.remaining if activity.remaining is not none else "不限" }}</div>
   </div>
   <div class="stat">
+    <div class="stat-label">候补中</div>
+    <div class="stat-value">{{ activity.waitlist_count }}</div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">待审核</div>
+    <div class="stat-value">{{ activity.pending_count }}</div>
+  </div>
+  <div class="stat">
     <div class="stat-label">活动状态</div>
     <div class="stat-value" style="font-size:16px;">
       <span class="badge badge-{{ activity.status }}">{{ activity.status_label }}</span>
@@ -28,42 +36,164 @@
   </div>
 </div>
 
-{% if registrations %}
-  <div class="table-wrap panel">
-    <table class="data">
-      <thead>
-        <tr>
-          <th>序号</th>
-          <th>姓名</th>
-          <th>学号</th>
-          <th>账号</th>
-          <th>报名时间</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for r in registrations %}
+{% if activity.requires_review %}
+  <p class="hint">该活动已开启报名审核：学生提交后先进入「待审核」，由你确认资格后再按当时名额决定正式参加或进入候补。</p>
+{% endif %}
+
+{# ---------------------------------------------------------- 待审核申请 #}
+{% if pending %}
+  <div class="panel">
+    <h2>待审核申请 <span class="sub">{{ pending|length }} 条</span></h2>
+    {% if activity.eligibility_note %}
+      <p class="hint">本活动的参加资格：{{ activity.eligibility_note }}</p>
+    {% endif %}
+    <div class="table-wrap">
+      <table class="data">
+        <thead>
           <tr>
-            <td class="num">{{ loop.index }}</td>
-            <td>{{ r.user.real_name }}</td>
-            <td>{{ r.user.student_no or "—" }}</td>
-            <td>{{ r.user.username }}</td>
-            <td>{{ r.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+            <th>序号</th>
+            <th>姓名</th>
+            <th>学号</th>
+            <th>账号</th>
+            <th>提交时间</th>
+            <th>操作</th>
           </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {% for r in pending %}
+            <tr>
+              <td class="num">{{ loop.index }}</td>
+              <td>{{ r.user.real_name }}</td>
+              <td>{{ r.user.student_no or "—" }}</td>
+              <td>{{ r.user.username }}</td>
+              <td>{{ r.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+              <td>
+                <form method="post"
+                      action="{{ url_for('registrations.review', activity_id=activity.id, registration_id=r.id) }}"
+                      class="inline-form">
+                  <button class="btn btn-primary btn-sm" type="submit" name="decision" value="approve">通过</button>
+                  <button class="btn btn-ghost btn-sm" type="submit" name="decision" value="reject">拒绝</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="hint">通过时会先确认资格，再看当时是否还有名额：有名额即为正式参加，无名额则自动转入候补队列。</p>
   </div>
-  <p class="hint">
-    共 {{ registrations|length }} 人报名。
-    {% if activity.remaining is not none %}剩余 {{ activity.remaining }} 个名额。{% endif %}
-  </p>
-{% else %}
+{% endif %}
+
+{# ---------------------------------------------------------- 正式参加 #}
+<div class="panel">
+  <h2>正式参加名单 <span class="sub">{{ roster.approved|length }} 人</span></h2>
+  {% if roster.approved %}
+    <div class="table-wrap">
+      <table class="data">
+        <thead>
+          <tr><th>序号</th><th>姓名</th><th>学号</th><th>账号</th><th>报名时间</th></tr>
+        </thead>
+        <tbody>
+          {% for r in roster.approved %}
+            <tr>
+              <td class="num">{{ loop.index }}</td>
+              <td>{{ r.user.real_name }}</td>
+              <td>{{ r.user.student_no or "—" }}</td>
+              <td>{{ r.user.username }}</td>
+              <td>{{ r.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="hint">
+      共 {{ roster.approved|length }} 人正式参加。
+      {% if activity.remaining is not none %}剩余 {{ activity.remaining }} 个名额。{% endif %}
+    </p>
+  {% else %}
+    <p class="hint">暂时还没有正式参加的学生。</p>
+  {% endif %}
+</div>
+
+{# ---------------------------------------------------------- 候补队列 #}
+{% if roster.waitlist %}
+  <div class="panel">
+    <h2>候补队列 <span class="sub">{{ roster.waitlist|length }} 人</span></h2>
+    <div class="table-wrap">
+      <table class="data">
+        <thead>
+          <tr><th>候补位次</th><th>姓名</th><th>学号</th><th>账号</th><th>提交时间</th></tr>
+        </thead>
+        <tbody>
+          {% for r in roster.waitlist %}
+            <tr>
+              <td class="num">{{ loop.index }}</td>
+              <td>{{ r.user.real_name }}</td>
+              <td>{{ r.user.student_no or "—" }}</td>
+              <td>{{ r.user.username }}</td>
+              <td>{{ r.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="hint">候补按提交时间先后排序。有正式参加者取消时，空出的名额会自动补给第 1 位，无需手动操作。</p>
+  </div>
+{% endif %}
+
+{# ---------------------------------------------------------- 未通过 / 已取消 #}
+{% if roster.rejected %}
+  <div class="panel">
+    <h2>未通过 <span class="sub">{{ roster.rejected|length }} 人</span></h2>
+    <div class="table-wrap">
+      <table class="data">
+        <thead>
+          <tr><th>姓名</th><th>学号</th><th>提交时间</th></tr>
+        </thead>
+        <tbody>
+          {% for r in roster.rejected %}
+            <tr>
+              <td>{{ r.user.real_name }}</td>
+              <td>{{ r.user.student_no or "—" }}</td>
+              <td>{{ r.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endif %}
+
+{% if roster.canceled %}
+  <div class="panel">
+    <h2>已取消 <span class="sub">{{ roster.canceled|length }} 人</span></h2>
+    <div class="table-wrap">
+      <table class="data">
+        <thead>
+          <tr><th>姓名</th><th>学号</th><th>提交时间</th></tr>
+        </thead>
+        <tbody>
+          {% for r in roster.canceled %}
+            <tr>
+              <td>{{ r.user.real_name }}</td>
+              <td>{{ r.user.student_no or "—" }}</td>
+              <td>{{ r.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endif %}
+
+{% if not activity.registrations %}
   <div class="panel empty-state">
     <h2>暂时还没有学生报名</h2>
     <p>活动已经在活动列表中展示，学生可以直接报名。</p>
   </div>
 {% endif %}
 
+{# ---------------------------------------------------------- 操作记录 #}
 <div class="panel">
   <h2>关键操作记录 <span class="sub">最近 {{ logs|length }} 条</span></h2>
   {% if logs %}

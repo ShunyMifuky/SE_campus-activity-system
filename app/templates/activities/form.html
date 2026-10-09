@@ -52,6 +52,21 @@
         <input type="number" name="capacity" value="{{ values.capacity }}" min="0" step="1">
       </label>
 
+      <div class="field full">
+        <span class="field-label">是否需要审核报名 <i>V2.0：勾选后学生报名需经你逐个确认</i></span>
+        <label class="checkbox-line">
+          <input type="checkbox" name="requires_review" value="1"
+                 {% if values.requires_review %}checked{% endif %}>
+          <span>开启审核（不勾选则报名后直接生效，与 V1.0 行为一致）</span>
+        </label>
+      </div>
+
+      <label class="field full">
+        <span class="field-label">参加资格说明 <i>可选，最多 200 字；填写后会在活动详情页展示，供你审核时对照</i></span>
+        <input type="text" name="eligibility_note" value="{{ values.eligibility_note }}" maxlength="200"
+               placeholder="例如：限大三及以上，需参加过前置培训">
+      </label>
+
       <label class="field full">
         <span class="field-label">活动简介</span>
         <textarea name="summary" maxlength="500"
@@ -63,7 +78,7 @@
       <button class="btn btn-primary" type="submit">{{ "保存修改" if activity else "发布活动" }}</button>
       <a class="btn btn-ghost" href="{{ url_for('activities.detail', activity_id=activity.id) if activity else url_for('activities.list_activities') }}">取消</a>
       {% if activity %}
-        <span class="hint" style="margin:0;">当前已报名 {{ activity.registered_count }} 人，人数上限不能低于该数量。</span>
+        <span class="hint" style="margin:0;">当前正式参加 {{ activity.approved_count }} 人，人数上限不能低于该数量（候补与待审核不计入）。</span>
       {% endif %}
     </div>
   </form>

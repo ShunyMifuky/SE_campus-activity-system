@@ -92,6 +92,12 @@ def login():
 
         if user is None or not user.check_password(password):
             flash("账号或密码不正确。", "danger")
+        elif not user.is_active:
+            # 账号被系统管理员停用（R-09）。
+            # 注意：login_user() 对停用账号会返回 False 且不建立会话，
+            # 若这里不单独判断，用户会看到"欢迎回来"却实际并未登录——
+            # 提示与实际状态不一致（V2.0 验证时发现并修正）。
+            flash("该账号已被停用，请联系系统管理员。", "warning")
         else:
             login_user(user, remember=bool(request.form.get("remember")))
             flash(f"欢迎回来，{user.real_name}（{user.role_label}）。", "success")

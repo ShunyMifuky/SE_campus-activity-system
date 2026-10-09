@@ -5,6 +5,8 @@
   - 只通过 HTTP 接口（test_client）访问系统，不直接调用 service，
     验证的是"用户真实能走通的路径"，而不是内部函数的正确性
   - 覆盖正常流程与异常分支：重复报名、名额已满、报名已截止、越权访问
+  - V2.0 规则演进后，本文件有 4 条断言按新行为更新（满员改为进入候补、
+    取消保留记录、名额只统计已通过），每处均在其用例内注明原因
 
 实现注意（踩过的坑）：
   不能在请求之间长期持有一个应用上下文。Flask-Login 把当前登录用户缓存在
@@ -24,6 +26,7 @@ from datetime import timedelta
 from app import create_app
 from app.extensions import db
 from app.models import (
+    REG_APPROVED,
     ROLE_STUDENT,
     ROLE_TEACHER,
     STATUS_CLOSED,
@@ -128,8 +131,20 @@ class BaseCase(unittest.TestCase):
             return db.session.get(Activity, activity_id).status
 
     def registered_count(self, activity_id: int) -> int:
+        """报名记录总数（含候补、待审核与已取消）。"""
         with self.app.app_context():
             return Registration.query.filter_by(activity_id=activity_id).count()
+
+    def approved_count(self, activity_id: int) -> int:
+        """正式参加人数。
+
+        V2.0 起名额只统计「已通过」，候补与待审核均不占用名额，
+        因此不能用记录总数代表名额占用情况。
+        """
+        with self.app.app_context():
+            return Registration.query.filter_by(
+                activity_id=activity_id, status=REG_APPROVED
+            ).count()
 
     def registration_total(self) -> int:
         with self.app.app_context():
@@ -307,7 +322,7 @@ class Test03ActivityManagement(BaseCase):
         )
         self.assertIn("报名截止时间不能晚于活动开始时间", self.body(response))
 
-    def test_03d_人数上限不能低于已报名人数(self):
+    def test_03d_人数上限不能低于正式参加人数(self):
         activity_id = self.make_activity(capacity=10)
         self.add_registration(activity_id, "student_1")
         self.add_registration(activity_id, "student_2")
@@ -329,7 +344,8 @@ class Test03ActivityManagement(BaseCase):
             },
             follow_redirects=True,
         )
-        self.assertIn("人数上限不能小于当前已报名人数", self.body(response))
+        # V2.0：名额口径改为只统计「正式参加」，候补与待审核不计入
+        self.assertIn("人数上限不能小于当前正式参加人数", self.body(response))
 
     def test_03e_下架后列表不可见且不可报名(self):
         activity_id = self.make_activity()
@@ -437,7 +453,8 @@ class Test05Signup(BaseCase):
         self.assertIn("请勿重复报名", self.body(response))
         self.assertEqual(self.registered_count(activity_id), 1)
 
-    def test_05c_名额已满时报名被拒绝(self):
+    def test_05c_名额已满时进入候补队列(self):
+        """规则演进：V1.0 满员即拒；V2.0 保留报名入口并转入候补（R-01）。"""
         activity_id = self.make_activity(capacity=1)
 
         first = self.client()
@@ -450,8 +467,10 @@ class Test05Signup(BaseCase):
         second = self.client()
         self.login(second, "student_2")
         response = second.post(f"/activities/{activity_id}/signup", follow_redirects=True)
-        self.assertIn("名额已满", self.body(response))
-        self.assertEqual(self.registered_count(activity_id), 1)
+        self.assertIn("已进入候补队列", self.body(response))
+        # 正式名额仍只有 1 个：第二人进入候补，不占用名额
+        self.assertEqual(self.approved_count(activity_id), 1)
+        self.assertEqual(self.registered_count(activity_id), 2)
 
     def test_05d_报名截止后不能再报名(self):
         """关键异常分支：截止时间已过，即使名额未满也不允许报名。"""
@@ -481,12 +500,17 @@ class Test05Signup(BaseCase):
             "已取消报名",
             self.body(client.post(f"/activities/{activity_id}/cancel-signup", follow_redirects=True)),
         )
-        self.assertEqual(self.registered_count(activity_id), 0)
+        # V2.0：取消不再物理删除记录，而是置为「已取消」供教师追溯，
+        # 因此正式参加人数归零，但报名记录仍保留 1 条
+        self.assertEqual(self.approved_count(activity_id), 0)
+        self.assertEqual(self.registered_count(activity_id), 1)
 
         self.assertIn(
             "报名成功",
             self.body(client.post(f"/activities/{activity_id}/signup", follow_redirects=True)),
         )
+        # 复用原记录改状态，不新增记录
+        self.assertEqual(self.approved_count(activity_id), 1)
         self.assertEqual(self.registered_count(activity_id), 1)
 
 
@@ -536,7 +560,10 @@ class Test06Roster(BaseCase):
         teacher = self.client()
         self.login(teacher, "teacher_a")
         page = self.body(teacher.get(f"/activities/{activity_id}/signups"))
-        self.assertIn("暂时还没有学生报名", page)
+        # V2.0：名单按状态分块展示。取消后正式参加名单清空，
+        # 但记录转入「已取消」分块保留，便于教师追溯名额流动
+        self.assertIn("暂时还没有正式参加的学生", page)
+        self.assertIn("已取消", page)
 
     def test_06d_不限人数活动显示不限(self):
         activity_id = self.make_activity(capacity=0)

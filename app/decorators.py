@@ -55,6 +55,17 @@ def student_required(view):
     return role_required(ROLE_STUDENT)(view)
 
 
+def admin_required(view):
+    """仅系统管理员可访问（V2.0 新增，R-09）。
+
+    管理员负责平台账号与活动秩序，不介入具体报名业务；
+    因此管理员的入口单独用本装饰器，不复用教师权限。
+    """
+    from .models import ROLE_ADMIN
+
+    return role_required(ROLE_ADMIN)(view)
+
+
 def ensure_resource_owner(resource, owner_field: str = "creator_id") -> None:
     """资源归属校验（约束 C3 的后半段）。
 

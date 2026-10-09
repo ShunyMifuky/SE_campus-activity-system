@@ -2,8 +2,8 @@
 
 用法：python pack_source.py
 输出（桌面）：
-  校园活动管理系统_V1.0_源代码.zip        —— 含 .git，可完整还原版本记录
-  校园活动管理系统_V1.0_源代码汇编.md     —— 便于阅读/打印的源代码清单
+  校园活动管理系统_V2.0_源代码.zip        —— 含 .git，可完整还原版本记录
+  校园活动管理系统_V2.0_源代码汇编.md     —— 便于阅读/打印的源代码清单
 """
 
 import subprocess
@@ -13,8 +13,8 @@ from pathlib import Path
 
 PROJECT = Path("C:/Users/42469/WorkBuddy/2026-09-11-16-51-20/campus-activity-system")
 DESKTOP = Path("C:/Users/42469/Desktop")
-ZIP_PATH = DESKTOP / "校园活动管理系统_V1.0_源代码.zip"
-DOC_PATH = DESKTOP / "校园活动管理系统_V1.0_源代码汇编.md"
+ZIP_PATH = DESKTOP / "校园活动管理系统_V2.0_源代码.zip"
+DOC_PATH = DESKTOP / "校园活动管理系统_V2.0_源代码汇编.md"
 
 EXCLUDE_DIRS = {"__pycache__", ".venv", "venv", "instance", ".pytest_cache"}
 
@@ -39,6 +39,8 @@ ORDER = [
     "app/activities/routes.py",
     "app/registrations/__init__.py",
     "app/registrations/routes.py",
+    "app/admin/__init__.py",
+    "app/admin/routes.py",
     "app/main/__init__.py",
     "app/main/routes.py",
     "app/templates/base.html",
@@ -52,11 +54,14 @@ ORDER = [
     "app/templates/activities/mine.html",
     "app/templates/registrations/mine.html",
     "app/templates/registrations/roster.html",
+    "app/templates/admin/users.html",
+    "app/templates/admin/activities.html",
     "app/templates/errors/403.html",
     "app/templates/errors/404.html",
     "app/static/css/style.css",
     "tests/__init__.py",
     "tests/test_business.py",
+    "tests/test_v2.py",
     "scripts/make_diagrams.py",
     "scripts/capture_screenshots.py",
 ]
@@ -109,10 +114,11 @@ def build_source_doc():
     lines = []
     add = lines.append
 
-    add("# 校园活动管理系统 V1.0 · 源代码汇编\n")
-    add("> 实验一 · 基于工程意图的软件迭代开发　|　小组：林翔宇、王泰然、唐佳涵")
-    add("> 本文档只收录程序源代码；设计文档（需求分析、工程意图、软件设计、验证报告）")
-    add("> 位于工作文件夹的 `docs/` 目录下，另有独立文件。\n")
+    add("# 校园活动管理系统 V2.0 · 源代码汇编\n")
+    add("> 实验一 · 基于工程意图的软件迭代开发（V1.0）")
+    add("> 实验二 · 基于用户访谈的需求演化（V2.0）　|　小组：林翔宇、王泰然、唐佳涵")
+    add("> 本文档只收录程序源代码；设计文档（需求分析、工程意图、软件设计、验证报告、")
+    add("> V2.0 需求演化与设计调整）位于工作文件夹的 `docs/` 目录下，另有独立文件。\n")
 
     add("## 工作文件夹\n")
     add("```")
@@ -122,11 +128,11 @@ def build_source_doc():
     add("## 一、项目概况\n")
     add("| 项目 | 内容 |")
     add("|---|---|")
-    add("| 实验项目 | 校园活动管理系统 V1.0 |")
+    add("| 实验项目 | 校园活动管理系统 V2.0（在 V1.0 基础上迭代） |")
     add("| 技术栈 | Python Flask + Flask-SQLAlchemy + Flask-Login + SQLite + Jinja2 |")
     add("| 前端方式 | 服务端渲染，原生 CSS，无构建链 |")
     add("| 数据库 | SQLite 单文件（`instance/campus.db`，已被 .gitignore 排除） |")
-    add("| 版本管理 | Git（本地仓库，按任务要求未推送公网平台） |")
+    add("| 版本管理 | Git　公开仓库 https://github.com/ShunyMifuky/SE_campus-activity-system |")
     add("| 源文件数 | SOURCE_FILE_COUNT 个 |")
     add("| 源代码规模 | 合计 SOURCE_LINE_COUNT 行 |")
     add(f"| Git 提交 | {git('rev-list', '--count', 'HEAD')} 次 |\n")

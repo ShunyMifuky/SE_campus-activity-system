@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}账号管理 · 校园活动管理系统{% endblock %}
+
+{% block content %}
+<div class="section-title">
+  <h2>账号管理</h2>
+  <span class="hint">共 {{ total }} 个账号，其中已停用 {{ disabled_total }} 个</span>
+</div>
+
+<div class="panel">
+  <form method="get" class="form-grid">
+    <label class="field">
+      <span class="field-label">角色</span>
+      <select name="role">
+        <option value="">全部角色</option>
+        {% for key, label in role_labels.items() %}
+          <option value="{{ key }}" {% if role_filter == key %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+
+    <label class="field">
+      <span class="field-label">账号状态</span>
+      <select name="state">
+        <option value="">全部状态</option>
+        <option value="enabled" {% if state_filter == 'enabled' %}selected{% endif %}>正常</option>
+        <option value="disabled" {% if state_filter == 'disabled' %}selected{% endif %}>已停用</option>
+      </select>
+    </label>
+
+    <div class="field">
+      <span class="field-label">&nbsp;</span>
+      <button class="btn btn-primary" type="submit">筛选</button>
+    </div>
+  </form>
+</div>
+
+<div class="panel">
+  {% if users %}
+    <div class="table-wrap">
+      <table class="data">
+        <thead>
+          <tr>
+            <th>账号</th>
+            <th>姓名</th>
+            <th>学号／工号</th>
+            <th>角色</th>
+            <th>账号状态</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+            <tr>
+              <td>{{ u.username }}</td>
+              <td>{{ u.real_name }}</td>
+              <td>{{ u.student_no or "—" }}</td>
+              <td><span class="badge badge-role">{{ u.role_label }}</span></td>
+              <td>
+                {% if u.enabled %}
+                  <span class="badge badge-open">正常</span>
+                {% else %}
+                  <span class="badge badge-canceled">已停用</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if u.id == current_user.id %}
+                  <span class="hint">当前登录账号</span>
+                {% else %}
+                  <form method="post" action="{{ url_for('admin.toggle_user', user_id=u.id) }}"
+                        onsubmit="return confirm('确定要{{ '停用' if u.enabled else '恢复' }}该账号吗？');">
+                    <button class="btn {{ 'btn-danger' if u.enabled else 'btn-ghost' }} btn-sm" type="submit">
+                      {{ '停用' if u.enabled else '恢复' }}
+                    </button>
+                  </form>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="hint">
+      停用账号只影响该用户登录，<b>不会改变其已有的报名记录</b>。
+      账号异常的判断依据由管理员掌握，平台不代为处理具体活动的报名业务。
+    </p>
+  {% else %}
+    <div class="empty-state">
+      <h2>没有符合条件的账号</h2>
+      <p>试试调整筛选条件。</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

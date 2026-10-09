@@ -18,6 +18,7 @@ def create_app(config_object="config.Config"):
     login_manager.init_app(app)
 
     from .activities import activities_bp
+    from .admin import admin_bp
     from .auth import auth_bp
     from .main import main_bp
     from .registrations import registrations_bp
@@ -26,6 +27,7 @@ def create_app(config_object="config.Config"):
     app.register_blueprint(auth_bp, url_prefix="/auth")
     app.register_blueprint(activities_bp)
     app.register_blueprint(registrations_bp)
+    app.register_blueprint(admin_bp, url_prefix="/admin")
 
     _register_error_handlers(app)
     _register_template_helpers(app)
@@ -51,6 +53,10 @@ def _register_template_helpers(app: Flask) -> None:
 
     @app.context_processor
     def inject_labels():
-        from .models import ROLE_LABELS, STATUS_LABELS
+        from .models import REG_LABELS, ROLE_LABELS, STATUS_LABELS
 
-        return {"ROLE_LABELS": ROLE_LABELS, "STATUS_LABELS": STATUS_LABELS}
+        return {
+            "ROLE_LABELS": ROLE_LABELS,
+            "STATUS_LABELS": STATUS_LABELS,
+            "REG_LABELS": REG_LABELS,
+        }

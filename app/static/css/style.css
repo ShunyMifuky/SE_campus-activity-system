@@ -278,3 +278,20 @@ table.data td.num { font-variant-numeric: tabular-nums; }
   border-top: 1px solid var(--border); background: var(--surface);
   color: var(--text-faint); font-size: 12px; padding: 18px 0; text-align: center;
 }
+
+/* -------------------------------------------- V2.0 报名状态标签（R-07） */
+.badge-reg-pending  { background: var(--info-soft);    color: var(--info);       border-color: #d3e3ee; }
+.badge-reg-approved { background: var(--success-soft); color: var(--success);    border-color: #c8e6d5; }
+.badge-reg-waitlist { background: var(--warning-soft); color: var(--warning);    border-color: #f0dcb4; }
+.badge-reg-rejected { background: var(--danger-soft);  color: var(--danger);     border-color: #f3cccc; }
+.badge-reg-canceled { background: #f1f5f9;             color: var(--text-muted); border-color: var(--border); }
+
+/* ------------------------------- V2.0 表单：勾选行与表格内的并排按钮 */
+.checkbox-line {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 14px; color: var(--text); cursor: pointer; padding: 6px 0;
+}
+.checkbox-line input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
+
+.inline-form { display: flex; gap: 6px; }
+.inline-form .btn { margin: 0; }

@@ -11,6 +11,7 @@ docs/06-V2.0设计调整.md 中的设计决策（D-xx）。
 
 import os
 import tempfile
+import time
 import unittest
 from datetime import timedelta
 
@@ -378,6 +379,55 @@ class ReviewCase(BaseCase):
         self.assertIn("候补", body)
         self.assertEqual(self.reg_status(aid, "stu2"), REG_WAITLIST)
         self.assertEqual(self.approved_count(aid), 1, "通过但无名额时不应超额")
+
+    def test_15b_waitlist_order_follows_enter_time(self):
+        """TEST-V2-15b（D10 修订）：候补按「进入候补的时间」排序，而非报名时间。
+
+        审核顺序与报名顺序相反时会分叉：先报名但后通过的人，是后进入候补的，
+        应排在后面。
+        """
+        aid = self.make_activity(capacity=1, requires_review=True)
+
+        # stu1 先报名并通过，占满唯一名额
+        c1 = self.client()
+        self.login(c1, "stu1")
+        c1.post(f"/activities/{aid}/signup", follow_redirects=True)
+        t = self.client()
+        self.login(t, "teacher")
+        t.post(
+            f"/activities/{aid}/registrations/{self.reg_id(aid, 'stu1')}/review",
+            data={"decision": "approve"}, follow_redirects=True,
+        )
+        self.assertEqual(self.approved_count(aid), 1)
+
+        # stu2 较早报名、stu3 较晚报名（都处于待审核）
+        c2 = self.client()
+        self.login(c2, "stu2")
+        c2.post(f"/activities/{aid}/signup", follow_redirects=True)
+        c3 = self.client()
+        self.login(c3, "stu3")
+        c3.post(f"/activities/{aid}/signup", follow_redirects=True)
+        rid2 = self.reg_id(aid, "stu2")
+        rid3 = self.reg_id(aid, "stu3")
+
+        # 先审核较晚报名的 stu3 → 无名额 → stu3 先进入候补
+        t.post(f"/activities/{aid}/registrations/{rid3}/review",
+               data={"decision": "approve"}, follow_redirects=True)
+        # now() 只精确到秒，拉开 1 秒才能让两次入队时刻真正可区分
+        time.sleep(1.05)
+        # 再审核较早报名的 stu2 → stu2 后进入候补
+        t.post(f"/activities/{aid}/registrations/{rid2}/review",
+               data={"decision": "approve"}, follow_redirects=True)
+
+        self.assertEqual(self.reg_status(aid, "stu2"), REG_WAITLIST)
+        self.assertEqual(self.reg_status(aid, "stu3"), REG_WAITLIST)
+
+        with self.app.app_context():
+            activity = db.session.get(Activity, aid)
+            order = [r.user.real_name for r in activity.waitlist_ordered]
+        # stu3 先进入候补 → 应排在 stu2 前面（按报名时间会得到相反结果）
+        self.assertEqual(order, ["学生三", "学生二"],
+                         "候补应按进入候补的时间排序，而不是报名时间")
 
     def test_16_reject_keeps_no_slot(self):
         """TEST-V2-16：审核拒绝 → 未通过，不占名额也不进候补。"""

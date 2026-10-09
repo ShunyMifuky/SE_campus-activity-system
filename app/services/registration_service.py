@@ -57,14 +57,23 @@ def signup(activity, user):
     else:
         status = REG_WAITLIST
 
+    # 只有真正进入候补才记录入队时刻（D10 修订：候补排序按「进入候补的时间」）
+    waitlisted_at = now() if status == REG_WAITLIST else None
+
     if existing is not None:
         # 复用原记录（设计决策 D9）：唯一约束下同一活动只有一条记录，
         # 直接改状态比"删除再新建"更干净，也保留了原始报名时间。
         existing.status = status
         existing.decided_at = now()
+        existing.waitlisted_at = waitlisted_at
         registration = existing
     else:
-        registration = Registration(activity_id=activity.id, user_id=user.id, status=status)
+        registration = Registration(
+            activity_id=activity.id,
+            user_id=user.id,
+            status=status,
+            waitlisted_at=waitlisted_at,
+        )
         db.session.add(registration)
 
     try:
@@ -124,9 +133,10 @@ def _promote_from_waitlist(activity):
     queue = activity.waitlist_ordered
     if not queue:
         return None
-    promoted = queue[0]                 # 按 created_at 升序，最靠前者
+    promoted = queue[0]                 # 按进入候补的时间升序，最靠前者
     promoted.status = REG_APPROVED
     promoted.decided_at = now()
+    promoted.waitlisted_at = None       # 已离开候补队列
     return promoted
 
 
@@ -165,6 +175,7 @@ def _give_up(activity, user, allowed, action, verb):
     released = registration.occupies_slot      # 只有放弃正式名额才需要递补
     registration.status = REG_CANCELED
     registration.decided_at = now()
+    registration.waitlisted_at = None          # 已离开候补队列
 
     promoted = _promote_from_waitlist(activity) if released else None
 
@@ -218,10 +229,13 @@ def review_registration(activity, registration, reviewer, approve: bool):
     # 通过 → 再看当时名额（R-06 的顺序：先资格、后名额）
     if activity.has_vacancy:
         registration.status = REG_APPROVED
+        registration.waitlisted_at = None
         tail = "已确认为正式参加。"
     else:
         registration.status = REG_WAITLIST
-        tail = "当时名额已满，已转入候补队列（沿用其原报名时间排队）。"
+        # 此刻才真正进入候补队列——候补排序以该时刻为准（访谈规则，D10 修订）
+        registration.waitlisted_at = now()
+        tail = "当时名额已满，已转入候补队列（按进入候补的时间排队）。"
     registration.decided_at = now()
 
     log_operation(

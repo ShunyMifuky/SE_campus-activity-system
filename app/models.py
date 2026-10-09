@@ -253,14 +253,19 @@ class Activity(db.Model):
 
     @property
     def waitlist_ordered(self):
-        """候补队列：按报名记录创建时间升序（设计决策 D10）。
+        """候补队列：按「进入候补的时间」升序（访谈规则，教师第 4 组）。
 
-        不另建队列表——创建时间天然稳定；且审核后转入候补的人沿用其原始
-        报名时间，不会因为"转得晚"而排到后面。
+        不另建队列表——转入候补的时刻（waitlisted_at）天然稳定。
+
+        D10 修订：原按报名记录创建时间排序，该口径在「需审核活动 + 教师审核
+        顺序与报名顺序不一致」时会分叉——先报名但后通过的人会排到先通过的人
+        前面，与访谈确认的规则不符。现改为以真正转入候补的时刻为准。
         """
         return sorted(
             (r for r in self.registrations if r.status == REG_WAITLIST),
-            key=lambda r: (r.created_at, r.id),
+            # 历史数据可能没有 waitlisted_at，回退用报名时间，保证顺序稳定；
+            # 同一时刻入队的（now() 精确到秒）按报名先后排序
+            key=lambda r: (r.waitlisted_at or r.created_at, r.created_at, r.id),
         )
 
     @property
@@ -322,6 +327,10 @@ class Registration(db.Model):
     status = db.Column(db.String(20), nullable=False, default=REG_APPROVED, index=True)
     # 状态最近一次变化的时间（审核、递补等），用于名单展示与问题排查
     decided_at = db.Column(db.DateTime)
+    # 进入候补队列的时刻——候补排序的基准（设计决策 D10 修订）：
+    # 访谈确认的规则是「按进入候补的时间」，而非报名时间；两者在
+    # 「需审核活动 + 审核顺序与报名顺序不一致」时会分叉。
+    waitlisted_at = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, nullable=False, default=now)
 
     activity = db.relationship("Activity", back_populates="registrations")

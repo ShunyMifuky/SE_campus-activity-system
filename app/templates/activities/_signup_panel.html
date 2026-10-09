@@ -1,24 +1,52 @@
 {% if current_user.is_authenticated and current_user.is_student %}
-  {% if activity.has_registration_of(current_user) %}
-    <div class="flash flash-success">你已成功报名该活动，请按时参加。</div>
+  {% set reg = activity.registration_of(current_user) %}
+
+  {% if reg and reg.status == 'pending' %}
+    <div class="flash flash-info">你已提交报名申请，正在等待组织教师审核。</div>
     <form method="post" action="{{ url_for('registrations.cancel_signup', activity_id=activity.id) }}"
-          onsubmit="return confirm('确定要取消报名吗？取消后名额将释放给其他同学。');">
+          onsubmit="return confirm('确定要撤回本次报名申请吗？');">
+      <button class="btn btn-ghost" type="submit">撤回申请</button>
+    </form>
+
+  {% elif reg and reg.status == 'approved' %}
+    <div class="flash flash-success">你已确认参加该活动，请按时参加。</div>
+    <form method="post" action="{{ url_for('registrations.cancel_signup', activity_id=activity.id) }}"
+          onsubmit="return confirm('确定要取消报名吗？名额会释放给候补的同学。');">
       <button class="btn btn-danger" type="submit">取消报名</button>
     </form>
 
+  {% elif reg and reg.status == 'waitlist' %}
+    <div class="flash flash-warning">
+      该活动名额已满，你在候补队列中（第 {{ reg.waitlist_position }} 位）。
+      有人取消时会按候补顺序自动补位，无需重复提交。
+    </div>
+    <form method="post" action="{{ url_for('registrations.exit_waitlist', activity_id=activity.id) }}"
+          onsubmit="return confirm('确定要退出候补吗？');">
+      <button class="btn btn-ghost" type="submit">退出候补</button>
+    </form>
+
+  {% elif reg and reg.status == 'rejected' %}
+    <div class="flash flash-danger">你本次报名未通过审核，不符合该活动的参加条件。</div>
+
   {% elif activity.is_signup_open %}
     <form method="post" action="{{ url_for('registrations.signup', activity_id=activity.id) }}">
-      <button class="btn btn-primary" type="submit">立即报名</button>
+      {% if activity.requires_review %}
+        <p class="hint">该活动需要审核，提交后请等待组织教师确认。</p>
+        <button class="btn btn-primary" type="submit">提交报名（需审核）</button>
+      {% elif activity.is_full %}
+        <p class="hint">当前名额已满，提交后将进入候补队列，有空位时自动补位。</p>
+        <button class="btn btn-primary" type="submit">申请候补</button>
+      {% else %}
+        <button class="btn btn-primary" type="submit">立即报名</button>
+      {% endif %}
     </form>
 
   {% else %}
-    <p class="hint">
-      该活动当前不可报名：{{ activity.status_label }}{% if activity.is_full %}，名额已满{% endif %}。
-    </p>
+    <p class="hint">该活动当前不可报名：{{ activity.status_label }}。</p>
   {% endif %}
 
 {% elif current_user.is_authenticated %}
-  <p class="hint">教师账号用于发布和管理活动，不参与报名。</p>
+  <p class="hint">教师与管理员账号用于组织和管理活动，不参与报名。</p>
 
 {% else %}
   <p class="hint">

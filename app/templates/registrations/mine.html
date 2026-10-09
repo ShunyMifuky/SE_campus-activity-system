@@ -13,10 +13,10 @@
       <thead>
         <tr>
           <th>活动名称</th>
+          <th>报名状态</th>
           <th>活动时间</th>
           <th>活动地点</th>
-          <th>报名时间</th>
-          <th>活动状态</th>
+          <th>提交时间</th>
           <th>操作</th>
         </tr>
       </thead>
@@ -25,22 +25,45 @@
           {% set a = r.activity %}
           <tr>
             <td><a href="{{ url_for('activities.detail', activity_id=a.id) }}">{{ a.title }}</a></td>
+            <td>
+              <span class="badge badge-reg-{{ r.status }}">{{ r.status_label }}</span>
+              {% if r.status == 'waitlist' and r.waitlist_position %}
+                <small class="hint">第 {{ r.waitlist_position }} 位</small>
+              {% endif %}
+            </td>
             <td>{{ a.start_time.strftime('%Y-%m-%d %H:%M') }}</td>
             <td>{{ a.location }}</td>
             <td>{{ r.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
-            <td><span class="badge badge-{{ a.status }}">{{ a.status_label }}</span></td>
             <td>
-              <form method="post" action="{{ url_for('registrations.cancel_signup', activity_id=a.id) }}"
-                    onsubmit="return confirm('确定要取消报名吗？');">
-                <button class="btn btn-danger btn-sm" type="submit">取消报名</button>
-              </form>
+              {% if r.status == 'approved' %}
+                <form method="post" action="{{ url_for('registrations.cancel_signup', activity_id=a.id) }}"
+                      onsubmit="return confirm('确定要取消报名吗？名额会释放给候补的同学。');">
+                  <button class="btn btn-danger btn-sm" type="submit">取消报名</button>
+                </form>
+              {% elif r.status == 'pending' %}
+                <form method="post" action="{{ url_for('registrations.cancel_signup', activity_id=a.id) }}"
+                      onsubmit="return confirm('确定要撤回本次报名申请吗？');">
+                  <button class="btn btn-ghost btn-sm" type="submit">撤回申请</button>
+                </form>
+              {% elif r.status == 'waitlist' %}
+                <form method="post" action="{{ url_for('registrations.exit_waitlist', activity_id=a.id) }}"
+                      onsubmit="return confirm('确定要退出候补吗？');">
+                  <button class="btn btn-ghost btn-sm" type="submit">退出候补</button>
+                </form>
+              {% else %}
+                <span class="hint">—</span>
+              {% endif %}
             </td>
           </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
-  <p class="hint">共 {{ registrations|length }} 条报名记录。</p>
+  <p class="hint">
+    共 {{ registrations|length }} 条报名记录。状态含义：
+    待审核＝已提交、等待组织教师确认；已通过＝正式参加；候补中＝名额已满、等待空位自动补位；
+    未通过＝不符合该活动的参加条件；已取消＝已放弃本次报名。
+  </p>
 {% else %}
   <div class="panel empty-state">
     <h2>你还没有报名任何活动</h2>

@@ -74,8 +74,20 @@ def seed_users() -> int:
     return created
 
 
+def _weekend_evening(base):
+    """下一个「本周末」的周六 19:00（V3.0 R-16 的演示数据）。
+
+    与列表页「本周末」的口径保持一致：如果本周六已经过去，则顺延一周。
+    """
+    saturday = base + timedelta(days=(5 - base.weekday()) % 7)
+    start = saturday.replace(hour=19, minute=0, second=0, microsecond=0)
+    if start <= base:
+        start += timedelta(days=7)
+    return start
+
+
 def seed_activities() -> int:
-    """写入 5 个示例活动：覆盖列表筛选、需审核、已满员带候补三类场景。"""
+    """写入 6 个示例活动：覆盖列表筛选、需审核、已满员带候补三类场景。"""
     teacher = User.query.filter_by(username="wangtairan").first()
     if teacher is None or Activity.query.count() > 0:
         return 0
@@ -143,6 +155,18 @@ def seed_activities() -> int:
             "end_time": base + timedelta(days=12, hours=5),
             "signup_deadline": base + timedelta(days=11, hours=20),
             "capacity": 2,
+        },
+        {
+            # 演示 R-16：列表「本周末」筛选与卡片上的剩余名额
+            "title": "周末露天电影：《放映厅》",
+            "summary": "在中心草坪放映经典影片，自带坐垫即可参加。"
+                       "适合周末晚上与同学一起观看，映后有十分钟自由讨论。",
+            "location": "中心草坪",
+            "category_id": category_ids.get("文体活动"),
+            "start_time": _weekend_evening(base),
+            "end_time": _weekend_evening(base) + timedelta(hours=3),
+            "signup_deadline": _weekend_evening(base) - timedelta(hours=6),
+            "capacity": 80,
         },
     ]
 

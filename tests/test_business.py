@@ -443,14 +443,18 @@ class Test05Signup(BaseCase):
         self.assertEqual(self.registered_count(activity_id), 1)
         self.assertIn("验证用活动", self.body(client.get("/my/registrations")))
 
-    def test_05b_重复报名被拒绝(self):
+    def test_05b_重复报名返回当前状态(self):
+        """V3.0 R-10：重复报名不再报错，返回「已提交过 + 当前状态」，且不新增记录。"""
         activity_id = self.make_activity(capacity=10)
         client = self.client()
         self.login(client, "student_1")
         client.post(f"/activities/{activity_id}/signup", follow_redirects=True)
 
         response = client.post(f"/activities/{activity_id}/signup", follow_redirects=True)
-        self.assertIn("请勿重复报名", self.body(response))
+        body = self.body(response)
+        self.assertIn("提交过报名", body)
+        self.assertIn("当前状态：已通过", body)
+        self.assertNotIn("请勿重复报名", body)
         self.assertEqual(self.registered_count(activity_id), 1)
 
     def test_05c_名额已满时进入候补队列(self):

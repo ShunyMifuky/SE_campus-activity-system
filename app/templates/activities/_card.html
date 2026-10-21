@@ -1,3 +1,7 @@
+{# V3.0 R-16：卡片直接给出「能不能报、还剩多少、要不要审核、我报没报」，
+   让用户不必逐条点开详情才能排除。 #}
+{% set reg = a.registration_of(current_user)
+   if current_user.is_authenticated and current_user.is_student else none %}
 <article class="card">
   <div class="card-head">
     <h3 class="card-title">
@@ -6,17 +10,39 @@
     <span class="badge badge-{{ a.status }}">{{ a.status_label }}</span>
   </div>
 
+  <div class="card-flags">
+    {% if a.requires_review %}<span class="badge badge-role">需审核</span>{% endif %}
+    {% if reg and reg.status in ('pending', 'approved', 'waitlist') %}
+      <span class="badge badge-reg-{{ reg.status }}">我已报名 · {{ reg.status_label }}</span>
+    {% endif %}
+    {% if a.status == 'open' and a.is_full %}
+      <span class="badge badge-closed">已满，可候补</span>
+    {% endif %}
+  </div>
+
   <p class="card-summary">{{ a.summary or "（暂无简介）" }}</p>
 
   <ul class="card-meta">
-    <li><span>时间</span><span>{{ a.start_time.strftime('%m-%d %H:%M') }} ~ {{ a.end_time.strftime('%m-%d %H:%M') }}</span></li>
+    <li><span>时间</span><span>{{ a.start_time.strftime('%m-%d %H:%M') }} ~ {{ a.end_time.strftime('%H:%M') }}</span></li>
     <li><span>地点</span><span>{{ a.location }}</span></li>
-    <li><span>报名截止</span><span>{{ a.signup_deadline.strftime('%m-%d %H:%M') }}</span></li>
-    <li><span>已报名</span><span>{{ a.registered_count }} / {{ a.capacity_label }}</span></li>
+    <li>
+      <span>名额</span>
+      <span>
+        已报名 {{ a.registered_count }} / {{ a.capacity_label }}
+        {% if a.remaining is not none %}· 剩 {{ a.remaining }}{% endif %}
+      </span>
+    </li>
+    {% if a.waitlist_count %}
+      <li><span>候补</span><span>{{ a.waitlist_count }} 人排队</span></li>
+    {% endif %}
   </ul>
 
   <div class="card-foot">
     <span class="badge badge-plain">{{ a.category.name if a.category else "未分类" }}</span>
+    <span class="card-deadline">
+      {% if a.status == 'open' %}报名{{ a.signup_deadline|deadline_hint }}
+      {% else %}{{ a.status_label }}{% endif %}
+    </span>
     <a class="btn btn-ghost btn-sm" href="{{ url_for('activities.detail', activity_id=a.id) }}">查看详情</a>
   </div>
 </article>

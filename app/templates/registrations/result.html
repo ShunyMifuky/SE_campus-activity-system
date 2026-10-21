@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}报名结果 · {{ activity.title }}{% endblock %}
+
+{% block content %}
+{% set positive = attempt.code in ('SIGNUP_OK', 'SIGNUP_PENDING', 'SIGNUP_WAITLIST', 'SIGNUP_ALREADY_REGISTERED') %}
+
+<div class="result-page">
+  <div class="result-hero {{ 'is-positive' if positive else 'is-negative' }}">
+    <div class="result-icon" aria-hidden="true">{{ "✓" if positive else "!" }}</div>
+    <h1>{{ attempt.message }}</h1>
+    <div class="result-tags">
+      {% if attempt.status %}
+        <span class="badge badge-reg-{{ attempt.status }}">{{ REG_LABELS.get(attempt.status, attempt.status) }}</span>
+      {% endif %}
+      {% if attempt.position %}
+        <span class="badge badge-plain">候补第 {{ attempt.position }} 位</span>
+      {% endif %}
+      {% if attempt.retryable %}
+        <span class="badge badge-closed">可重试</span>
+      {% endif %}
+      <span class="badge badge-plain">{{ attempt.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</span>
+    </div>
+  </div>
+
+  {# R-11：把「为什么」和「现在能做什么」分开讲清楚，而不是只给一句失败提示 #}
+  <div class="result-grid">
+    <div class="panel result-block">
+      <h2>为什么是这个结果</h2>
+      <p>{{ attempt.reason or "—" }}</p>
+    </div>
+    <div class="panel result-block">
+      <h2>现在可以做什么</h2>
+      <p>{{ attempt.next_step or "—" }}</p>
+    </div>
+  </div>
+
+  <div class="panel result-activity">
+    <h2>本次提交</h2>
+    <ul class="detail-meta">
+      <li>活动：<b><a href="{{ url_for('activities.detail', activity_id=activity.id) }}">{{ activity.title }}</a></b></li>
+      <li>时间：<b>{{ activity.start_time.strftime('%Y-%m-%d %H:%M') }} ~ {{ activity.end_time.strftime('%H:%M') }}</b></li>
+      <li>地点：<b>{{ activity.location }}</b></li>
+      <li>状态：<b>{{ activity.status_label }}</b></li>
+    </ul>
+    <p class="hint">
+      本页可以收藏或刷新：刷新不会重复提交，也不会改变已提交的报名。
+      提交凭据：{{ attempt.token[:8] }}…
+    </p>
+    <div class="form-actions">
+      <a class="btn btn-primary" href="{{ url_for('registrations.mine') }}">查看我的报名</a>
+      <a class="btn btn-ghost" href="{{ url_for('activities.detail', activity_id=activity.id) }}">返回活动详情</a>
+      <a class="btn btn-ghost" href="{{ url_for('notifications.index') }}">查看通知</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

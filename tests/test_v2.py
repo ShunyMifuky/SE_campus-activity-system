@@ -176,7 +176,11 @@ class WaitlistSignupCase(BaseCase):
         self.assertEqual(self.reg_status(aid, "stu3"), REG_APPROVED)
 
     def test_04_duplicate_waitlist_rejected(self):
-        """TEST-V2-04（异常）：已在候补中再次提交 → 被拒绝。"""
+        """TEST-V2-04（异常）：已在候补中再次提交 → 返回当前状态，不重复建记录。
+
+        V3.0 R-10 调整：重复提交不再报错，二是回到结果页展示「当前状态：候补中」。
+        断言随之从「被拒绝」改为「状态可见 + 记录数不变」。
+        """
         aid = self.make_activity(capacity=1)
         c1 = self.client()
         self.login(c1, "stu1")
@@ -186,7 +190,9 @@ class WaitlistSignupCase(BaseCase):
         self.login(c2, "stu2")
         c2.post(f"/activities/{aid}/signup", follow_redirects=True)
         body = c2.post(f"/activities/{aid}/signup", follow_redirects=True).get_data(as_text=True)
-        self.assertIn("候补队列中", body)
+        self.assertIn("提交过报名", body)
+        self.assertIn("当前状态：候补中", body)
+        self.assertNotIn("请勿重复报名", body)
 
         with self.app.app_context():
             count = Registration.query.filter_by(activity_id=aid).count()

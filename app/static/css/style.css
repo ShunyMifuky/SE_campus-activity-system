@@ -295,3 +295,117 @@ table.data td.num { font-variant-numeric: tabular-nums; }
 
 .inline-form { display: flex; gap: 6px; }
 .inline-form .btn { margin: 0; }
+
+/* ======================================================================
+   V3.0
+   ====================================================================== */
+
+/* ------------------------------------------------ R-16 快捷筛选 chip */
+.quick-filters {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+  margin-bottom: 12px;
+}
+.quick-label { font-size: 12px; color: var(--text-faint); margin-right: 2px; }
+.chip {
+  display: inline-block; padding: 4px 12px; border-radius: 999px;
+  border: 1px solid var(--border-strong); background: var(--surface);
+  color: var(--text-muted); font-size: 12px; line-height: 1.6;
+}
+.chip:hover { border-color: var(--primary); color: var(--primary); text-decoration: none; }
+.chip.is-active {
+  background: var(--primary-soft); border-color: #c7d7f7;
+  color: var(--primary); font-weight: 500;
+}
+.quick-sep { width: 1px; height: 18px; background: var(--border); margin: 0 4px; }
+
+/* ------------------------------------------------ R-16 卡片信息密度 */
+.card-flags { display: flex; flex-wrap: wrap; gap: 6px; }
+.card-flags:empty { display: none; }
+.card-deadline { font-size: 12px; color: var(--text-faint); margin-left: auto; margin-right: 8px; }
+
+/* ------------------------------------------------ R-13 行内结果条 */
+.result-inline {
+  border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 12px 14px; font-size: 13px; margin-bottom: 12px;
+}
+.result-inline b { font-weight: 500; }
+.result-note { display: block; margin-top: 4px; font-size: 12px; color: var(--text-muted); }
+.result-inline-success { background: var(--success-soft); border-color: #c8e6d5; color: var(--success); }
+.result-inline-info    { background: var(--info-soft);    border-color: #d3e3ee; color: var(--info); }
+.result-inline-warning { background: var(--warning-soft); border-color: #f0dcb4; color: var(--warning); }
+.result-inline-danger  { background: var(--danger-soft);  border-color: #f3cccc; color: var(--danger); }
+
+/* ------------------------------------------------ R-13 结果页 */
+.result-page { max-width: 860px; margin: 0 auto; }
+.result-hero {
+  text-align: center; padding: 34px 24px 26px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); margin-bottom: 18px;
+}
+.result-icon {
+  width: 44px; height: 44px; border-radius: 50%; margin: 0 auto 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; color: #fff; background: var(--success);
+}
+.result-hero.is-negative .result-icon { background: var(--danger); }
+.result-hero h1 { margin: 0 0 12px; font-size: 19px; font-weight: 500; line-height: 1.5; }
+.result-tags { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.result-block { margin-bottom: 0; }
+.result-block p { margin: 0; color: var(--text-muted); font-size: 13px; }
+.result-activity .detail-meta { margin-top: 0; }
+
+/* ------------------------------------------------ R-14 通知 */
+.nav-notify { position: relative; display: inline-flex; align-items: center; gap: 4px; }
+.nav-badge {
+  display: inline-block; min-width: 17px; height: 17px; padding: 0 4px;
+  border-radius: 999px; background: var(--danger); color: #fff;
+  font-size: 10px; line-height: 17px; text-align: center;
+}
+.notice-list { padding: 0; overflow: hidden; }
+.notice {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+  padding: 14px 20px; border-bottom: 1px solid var(--border);
+}
+.notice:last-child { border-bottom: none; }
+.notice.is-unread { background: #fbfdff; }
+.notice-main { flex: 1; min-width: 0; }
+.notice-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.notice-title { color: var(--text); font-size: 14px; font-weight: 500; }
+.notice.is-unread .notice-title { color: var(--primary); }
+.notice-body { margin: 4px 0 2px; font-size: 13px; color: var(--text-muted); }
+.notice-meta { font-size: 12px; color: var(--text-faint); }
+.notice-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--danger);
+  display: inline-block;
+}
+.badge-notice-review_approved    { background: var(--success-soft); color: var(--success); border-color: #c8e6d5; }
+.badge-notice-review_rejected    { background: var(--danger-soft);  color: var(--danger);  border-color: #f3cccc; }
+.badge-notice-waitlist_promoted  { background: var(--warning-soft); color: var(--warning); border-color: #f0dcb4; }
+.badge-notice-activity_canceled  { background: #f1f5f9; color: var(--text-muted); border-color: var(--border); }
+
+/* ------------------------------------------------ 小工具 */
+.block { display: block; margin-top: 2px; }
+
+/* ------------------------------------------------ R-16 移动端（数据里 71%） */
+@media (max-width: 640px) {
+  .container { padding: 0 14px; }
+  .page { padding: 16px 14px 36px; }
+  .header-inner { flex-wrap: wrap; gap: 10px 14px; padding: 10px 0; }
+  .nav { order: 3; flex-basis: 100%; overflow-x: auto; gap: 14px; padding-bottom: 4px; }
+  .nav a { white-space: nowrap; }
+  .user-area { margin-left: auto; }
+
+  .toolbar form { flex-direction: column; align-items: stretch; }
+  .toolbar .field-sm, .toolbar .field-grow { flex: 1 1 auto; }
+  .toolbar .btn { width: 100%; text-align: center; }
+
+  .activity-grid { grid-template-columns: 1fr; }
+  .card { padding: 16px; }
+  .card-deadline { margin-left: 0; }
+
+  .result-grid { grid-template-columns: 1fr; }
+  .notice { flex-direction: column; gap: 8px; }
+  .detail-head { flex-direction: column; }
+  .form-actions { flex-wrap: wrap; }
+}

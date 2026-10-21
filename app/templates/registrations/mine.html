@@ -28,8 +28,19 @@
             <td>
               <span class="badge badge-reg-{{ r.status }}">{{ r.status_label }}</span>
               {% if r.status == 'waitlist' and r.waitlist_position %}
-                <small class="hint">第 {{ r.waitlist_position }} 位</small>
+                <small class="hint block">第 {{ r.waitlist_position }} 位，前面还有 {{ r.waitlist_position - 1 }} 人</small>
+              {% elif r.status == 'approved' %}
+                <small class="hint block">已确认参加</small>
+              {% elif r.status == 'pending' %}
+                <small class="hint block">等待教师审核</small>
+              {% elif r.status == 'rejected' %}
+                <small class="hint block">不符合参加条件</small>
+              {% elif r.status == 'canceled' %}
+                <small class="hint block">已放弃本次报名</small>
               {% endif %}
+              <small class="hint block">
+                更新于 {{ (r.decided_at or r.created_at).strftime('%m-%d %H:%M') }}
+              </small>
             </td>
             <td>{{ a.start_time.strftime('%Y-%m-%d %H:%M') }}</td>
             <td>{{ a.location }}</td>
@@ -63,6 +74,10 @@
     共 {{ registrations|length }} 条报名记录。状态含义：
     待审核＝已提交、等待组织教师确认；已通过＝正式参加；候补中＝名额已满、等待空位自动补位；
     未通过＝不符合该活动的参加条件；已取消＝已放弃本次报名。
+  </p>
+  <p class="hint">
+    状态发生变化时会在<a href="{{ url_for('notifications.index') }}">通知</a>里提醒你，
+    <b>不需要反复刷新本页</b>。
   </p>
 {% else %}
   <div class="panel empty-state">

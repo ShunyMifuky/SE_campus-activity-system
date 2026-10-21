@@ -9,6 +9,18 @@
   {% endif %}
 </div>
 
+<div class="quick-filters" role="group" aria-label="快捷筛选">
+  <span class="quick-label">快捷筛选</span>
+  <a class="chip {% if not filters.when %}is-active{% endif %}" href="{{ filter_url(when='') }}">不限时间</a>
+  <a class="chip {% if filters.when == 'weekend' %}is-active{% endif %}" href="{{ filter_url(when='weekend') }}">本周末</a>
+  <a class="chip {% if filters.when == 'week' %}is-active{% endif %}" href="{{ filter_url(when='week') }}">未来 7 天</a>
+  <span class="quick-sep" aria-hidden="true"></span>
+  <a class="chip {% if filters.vacancy %}is-active{% endif %}"
+     href="{{ filter_url(vacancy='' if filters.vacancy else '1') }}">还有名额</a>
+  <a class="chip {% if filters.review == '0' %}is-active{% endif %}"
+     href="{{ filter_url(review='' if filters.review == '0' else '0') }}">无需审核</a>
+</div>
+
 <div class="toolbar">
   <form method="get" action="{{ url_for('activities.list_activities') }}">
     <label class="field field-grow">
@@ -36,6 +48,11 @@
       </select>
     </label>
 
+    {# 快捷筛选也要随表单一起提交，否则点「筛选」会把它们清掉 #}
+    {% if filters.when %}<input type="hidden" name="when" value="{{ filters.when }}">{% endif %}
+    {% if filters.vacancy %}<input type="hidden" name="vacancy" value="{{ filters.vacancy }}">{% endif %}
+    {% if filters.review %}<input type="hidden" name="review" value="{{ filters.review }}">{% endif %}
+
     <button class="btn btn-primary" type="submit">筛选</button>
     <a class="btn btn-ghost" href="{{ url_for('activities.list_activities') }}">重置</a>
   </form>
@@ -47,11 +64,16 @@
       {% include "activities/_card.html" %}
     {% endfor %}
   </div>
-  <p class="hint">共 {{ activities|length }} 个活动。</p>
+  <p class="hint">
+    共 {{ activities|length }} 个活动。
+    {% if filters.when == 'weekend' %}已按「本周末」筛选；{% elif filters.when == 'week' %}已按「未来 7 天」筛选；{% endif %}
+    {% if filters.vacancy %}仅显示仍可报名且有名额的活动；{% endif %}
+    {% if filters.review == '0' %}仅显示无需审核的活动；{% endif %}
+  </p>
 {% else %}
   <div class="panel empty-state">
     <h2>没有符合条件的活动</h2>
-    <p>可以尝试调整筛选条件，或者清空关键词后重新查询。</p>
+    <p>可以尝试取消一两个筛选条件，或者清空关键词后重新查询。</p>
     {% if current_user.is_authenticated and current_user.is_teacher %}
       <a class="btn btn-primary" href="{{ url_for('activities.create') }}">发布第一个活动</a>
     {% endif %}

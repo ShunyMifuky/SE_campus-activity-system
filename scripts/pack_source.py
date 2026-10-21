@@ -2,8 +2,8 @@
 
 用法：python pack_source.py
 输出（桌面）：
-  校园活动管理系统_V2.0_源代码.zip        —— 含 .git，可完整还原版本记录
-  校园活动管理系统_V2.0_源代码汇编.md     —— 便于阅读/打印的源代码清单
+  校园活动管理系统_V3.0_源代码.zip        —— 含 .git，可完整还原版本记录
+  校园活动管理系统_V3.0_源代码汇编.md     —— 便于阅读/打印的源代码清单
 """
 
 import subprocess
@@ -13,8 +13,8 @@ from pathlib import Path
 
 PROJECT = Path("C:/Users/42469/WorkBuddy/2026-09-11-16-51-20/campus-activity-system")
 DESKTOP = Path("C:/Users/42469/Desktop")
-ZIP_PATH = DESKTOP / "校园活动管理系统_V2.0_源代码.zip"
-DOC_PATH = DESKTOP / "校园活动管理系统_V2.0_源代码汇编.md"
+ZIP_PATH = DESKTOP / "校园活动管理系统_V3.0_源代码.zip"
+DOC_PATH = DESKTOP / "校园活动管理系统_V3.0_源代码汇编.md"
 
 EXCLUDE_DIRS = {"__pycache__", ".venv", "venv", "instance", ".pytest_cache"}
 
@@ -39,6 +39,8 @@ ORDER = [
     "app/activities/routes.py",
     "app/registrations/__init__.py",
     "app/registrations/routes.py",
+    "app/notifications/__init__.py",
+    "app/notifications/routes.py",
     "app/admin/__init__.py",
     "app/admin/routes.py",
     "app/main/__init__.py",
@@ -53,7 +55,9 @@ ORDER = [
     "app/templates/activities/form.html",
     "app/templates/activities/mine.html",
     "app/templates/registrations/mine.html",
+    "app/templates/registrations/result.html",
     "app/templates/registrations/roster.html",
+    "app/templates/notifications/index.html",
     "app/templates/admin/users.html",
     "app/templates/admin/activities.html",
     "app/templates/errors/403.html",
@@ -62,6 +66,9 @@ ORDER = [
     "tests/__init__.py",
     "tests/test_business.py",
     "tests/test_v2.py",
+    "tests/test_v3.py",
+    "scripts/analyze_runtime_data.py",
+    "scripts/make_exp3_charts.py",
     "scripts/make_diagrams.py",
     "scripts/capture_screenshots.py",
 ]
@@ -114,11 +121,12 @@ def build_source_doc():
     lines = []
     add = lines.append
 
-    add("# 校园活动管理系统 V2.0 · 源代码汇编\n")
+    add("# 校园活动管理系统 V3.0 · 源代码汇编\n")
     add("> 实验一 · 基于工程意图的软件迭代开发（V1.0）")
-    add("> 实验二 · 基于用户访谈的需求演化（V2.0）　|　小组：林翔宇、王泰然、唐佳涵")
+    add("> 实验二 · 基于用户访谈的需求演化（V2.0）")
+    add("> 实验三 · 基于运行数据的持续演进（V3.0）　|　小组：林翔宇、王泰然、唐佳涵")
     add("> 本文档只收录程序源代码；设计文档（需求分析、工程意图、软件设计、验证报告、")
-    add("> V2.0 需求演化与设计调整）位于工作文件夹的 `docs/` 目录下，另有独立文件。\n")
+    add("> V2.0 / V3.0 需求演化与设计调整）位于工作文件夹的 `docs/` 目录下，另有独立文件。\n")
 
     add("## 工作文件夹\n")
     add("```")
@@ -128,7 +136,7 @@ def build_source_doc():
     add("## 一、项目概况\n")
     add("| 项目 | 内容 |")
     add("|---|---|")
-    add("| 实验项目 | 校园活动管理系统 V2.0（在 V1.0 基础上迭代） |")
+    add("| 实验项目 | 校园活动管理系统 V3.0（在 V2.0 基础上迭代） |")
     add("| 技术栈 | Python Flask + Flask-SQLAlchemy + Flask-Login + SQLite + Jinja2 |")
     add("| 前端方式 | 服务端渲染，原生 CSS，无构建链 |")
     add("| 数据库 | SQLite 单文件（`instance/campus.db`，已被 .gitignore 排除） |")

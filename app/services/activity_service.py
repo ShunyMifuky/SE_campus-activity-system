@@ -9,7 +9,15 @@
 from datetime import datetime
 
 from ..extensions import db
-from ..models import Activity, Category, log_operation, now
+from ..models import (
+    NOTIFY_ACTIVITY_CANCELED,
+    REG_ACTIVE,
+    Activity,
+    Category,
+    log_operation,
+    notify,
+    now,
+)
 
 # 允许的日期时间输入格式：datetime-local 控件提交的是第一种
 DATETIME_FORMATS = ("%Y-%m-%dT%H:%M", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M")
@@ -180,6 +188,16 @@ def cancel_activity(activity, actor):
         target_id=activity.id,
         detail=f"下架活动《{activity.title}》",
     )
+    # R-14：下架会直接影响已报名学生的安排，必须主动通知，而不是等他们点进来发现。
+    for registration in activity.registrations:
+        if registration.status in REG_ACTIVE:
+            notify(
+                registration.user,
+                NOTIFY_ACTIVITY_CANCELED,
+                f"活动已下架：《{activity.title}》",
+                "组织教师已下架该活动，你的报名不再有效，请调整安排。",
+                activity_id=activity.id,
+            )
     db.session.commit()
     return []
 

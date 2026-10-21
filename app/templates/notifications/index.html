@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}通知 · 校园活动管理系统{% endblock %}
+
+{% block content %}
+<div class="section-title">
+  <h2>通知{% if unread %} <small class="sub">{{ unread }} 条未读</small>{% endif %}</h2>
+  {% if unread %}
+    <form method="post" action="{{ url_for('notifications.mark_all_read') }}">
+      <button class="btn btn-ghost btn-sm" type="submit">全部标为已读</button>
+    </form>
+  {% endif %}
+</div>
+
+{% if notifications %}
+  <div class="notice-list panel">
+    {% for n in notifications %}
+      <article class="notice {{ 'is-unread' if n.is_unread else '' }}">
+        <div class="notice-main">
+          <div class="notice-head">
+            <span class="badge badge-notice-{{ n.kind }}">{{ n.kind_label }}</span>
+            <a class="notice-title" href="{{ url_for('notifications.open_notification', notification_id=n.id) }}">{{ n.title }}</a>
+            {% if n.is_unread %}<span class="notice-dot" aria-label="未读"></span>{% endif %}
+          </div>
+          <p class="notice-body">{{ n.body }}</p>
+          <div class="notice-meta">{{ n.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+        </div>
+        {% if n.is_unread %}
+          <form method="post" action="{{ url_for('notifications.mark_read', notification_id=n.id) }}">
+            <input type="hidden" name="next" value="{{ url_for('notifications.index') }}">
+            <button class="btn btn-ghost btn-sm" type="submit">标为已读</button>
+          </form>
+        {% endif %}
+      </article>
+    {% endfor %}
+  </div>
+  <p class="hint">
+    通知只保留站内提醒。审核结果、候补递补、活动下架都会出现在这里，
+    不需要反复刷新「我的报名」。
+  </p>
+{% else %}
+  <div class="panel empty-state">
+    <h2>还没有通知</h2>
+    <p>报名审核结果、候补递补与活动变动会在这里提醒你。</p>
+    <a class="btn btn-primary" href="{{ url_for('activities.list_activities') }}">浏览活动</a>
+  </div>
+{% endif %}
+{% endblock %}

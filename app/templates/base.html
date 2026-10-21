@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}校园活动管理系统 V2.0{% endblock %}</title>
+  <title>{% block title %}校园活动管理系统 V3.0{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
@@ -11,7 +11,7 @@
   <div class="container header-inner">
     <a class="brand" href="{{ url_for('activities.list_activities') }}">
       <span class="brand-mark">校</span>
-      <span class="brand-text">校园活动管理系统<em>V2.0</em></span>
+      <span class="brand-text">校园活动管理系统<em>V3.0</em></span>
     </a>
 
     <nav class="nav">
@@ -22,6 +22,11 @@
       {% endif %}
       {% if current_user.is_authenticated and current_user.is_student %}
         <a href="{{ url_for('registrations.mine') }}">我的报名</a>
+      {% endif %}
+      {% if current_user.is_authenticated %}
+        <a class="nav-notify" href="{{ url_for('notifications.index') }}">
+          通知{% if unread_count %}<span class="nav-badge">{{ unread_count }}</span>{% endif %}
+        </a>
       {% endif %}
       {% if current_user.is_authenticated and current_user.is_admin %}
         <a href="{{ url_for('admin.users') }}">账号管理</a>
@@ -60,7 +65,7 @@
 
 <footer class="site-footer">
   <div class="container">
-    校园活动管理系统 V2.0 · 实验二 基于用户访谈的需求演化 ·
+    校园活动管理系统 V3.0 · 实验三 基于运行数据的持续演进 ·
     小组：林翔宇 / 王泰然 / 唐佳涵
   </div>
 </footer>

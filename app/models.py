@@ -368,6 +368,109 @@ class Registration(db.Model):
         )
 
 
+class SignupAttempt(db.Model):
+    """一次报名提交的凭据（V3.0 R-10：幂等）。
+
+    为什么要单独建表，而不是把令牌塞进 Registration 或 session：
+      - Registration 一活动一学生只有一条，且要长期保留，不适合承载「每次提交」；
+      - session 在换设备、清 cookie 后就丢了，无法复现第一次的结果。
+
+    token 由详情页渲染时生成，随表单提交；同一 token 的第二次提交直接读本表，
+    返回与第一次完全一致的结果——用户看到的是「你已报名成功」，而不是「请勿重复报名」。
+    """
+
+    __tablename__ = "signup_attempts"
+
+    id = db.Column(db.Integer, primary_key=True)
+    token = db.Column(db.String(64), unique=True, nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    activity_id = db.Column(db.Integer, db.ForeignKey("activities.id"), nullable=False, index=True)
+
+    # 结果快照：结果页与重复提交都从这里读，保证同一 token 的输出恒定
+    code = db.Column(db.String(40), nullable=False)
+    status = db.Column(db.String(20))
+    message = db.Column(db.String(255), nullable=False, default="")
+    reason = db.Column(db.String(255), nullable=False, default="")
+    next_step = db.Column(db.String(255), nullable=False, default="")
+    position = db.Column(db.Integer)
+    retryable = db.Column(db.Boolean, nullable=False, default=False)
+
+    created_at = db.Column(db.DateTime, nullable=False, default=now)
+
+    user = db.relationship("User")
+    activity = db.relationship("Activity")
+
+    def __repr__(self) -> str:
+        return f"<SignupAttempt {self.code} user={self.user_id} activity={self.activity_id}>"
+
+
+# ------------------------------------------------- 通知（V3.0 R-14）
+NOTIFY_REVIEW_APPROVED = "review_approved"
+NOTIFY_REVIEW_REJECTED = "review_rejected"
+NOTIFY_WAITLIST_PROMOTED = "waitlist_promoted"
+NOTIFY_ACTIVITY_CANCELED = "activity_canceled"
+
+NOTIFY_LABELS = {
+    NOTIFY_REVIEW_APPROVED: "报名通过",
+    NOTIFY_REVIEW_REJECTED: "报名未通过",
+    NOTIFY_WAITLIST_PROMOTED: "候补成功",
+    NOTIFY_ACTIVITY_CANCELED: "活动下架",
+}
+
+
+class Notification(db.Model):
+    """站内通知：状态变化必须主动触达，不能等用户自己来刷新（R-14）。
+
+    写入点与状态变更在同一个事务内（设计决策 D-16）：状态改了而通知没写，
+    用户就会再次陷入「变了但我不知道」。
+    """
+
+    __tablename__ = "notifications"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    kind = db.Column(db.String(40), nullable=False, index=True)
+    title = db.Column(db.String(120), nullable=False)
+    body = db.Column(db.String(255), nullable=False, default="")
+    # 关联活动（可空）：模板据此生成直达链接
+    activity_id = db.Column(db.Integer, db.ForeignKey("activities.id"))
+    created_at = db.Column(db.DateTime, nullable=False, default=now, index=True)
+    read_at = db.Column(db.DateTime)
+
+    user = db.relationship("User")
+    activity = db.relationship("Activity")
+
+    @property
+    def is_unread(self) -> bool:
+        return self.read_at is None
+
+    @property
+    def kind_label(self) -> str:
+        return NOTIFY_LABELS.get(self.kind, "通知")
+
+    def __repr__(self) -> str:
+        return f"<Notification {self.kind} user={self.user_id}>"
+
+
+def notify(user, kind: str, title: str, body: str = "", activity_id=None) -> None:
+    """写入一条通知（由调用方负责 commit，确保与状态变更同事务）。"""
+    db.session.add(
+        Notification(
+            user_id=user.id,
+            kind=kind,
+            title=title[:120],
+            body=body[:255],
+            activity_id=activity_id,
+        )
+    )
+
+
+def unread_notification_count(user) -> int:
+    if not getattr(user, "is_authenticated", False):
+        return 0
+    return Notification.query.filter_by(user_id=user.id, read_at=None).count()
+
+
 class OperationLog(db.Model):
     """关键操作日志：发布 / 下架 / 报名 / 取消报名。
 

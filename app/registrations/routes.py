@@ -7,11 +7,11 @@
 """
 
 from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
-from flask_login import current_user
+from flask_login import current_user, login_required
 
 from ..decorators import ensure_resource_owner, student_required, teacher_required
 from ..extensions import db
-from ..models import REG_APPROVED, Activity, OperationLog, Registration
+from ..models import REG_APPROVED, Activity, OperationLog, Registration, SignupAttempt
 from ..services import registration_service
 
 registrations_bp = Blueprint("registrations", __name__)
@@ -31,10 +31,38 @@ def _get_activity_or_404(activity_id: int) -> Activity:
 @registrations_bp.route("/activities/<int:activity_id>/signup", methods=["POST"])
 @student_required
 def signup(activity_id: int):
+    """提交报名（V3.0：带幂等令牌，结果落到结果页）。
+
+    令牌由详情页生成并随表单提交；同一令牌的重复提交不会再产生记录，
+    也不会看到「请勿重复报名」，而是回到同一张结果页（R-10）。
+    """
     activity = _get_activity_or_404(activity_id)
-    ok, message = registration_service.signup(activity, current_user)
-    flash(message, "success" if ok else "danger")
+    token = (request.form.get("signup_token") or "").strip()
+    result = registration_service.signup(activity, current_user, token)
+
+    if result.token:
+        return redirect(url_for("registrations.result", token=result.token))
+
+    # 极少数拿不到令牌的情况（理论上不会发生），退回详情页并用 flash 说明
+    flash(result.message, "success" if result.ok else "danger")
     return redirect(url_for("activities.detail", activity_id=activity.id))
+
+
+@registrations_bp.route("/registrations/result/<token>")
+@login_required
+def result(token: str):
+    """报名结果页（R-13）。
+
+    用 token 寻址，刷新是纯 GET，不会重复提交；只有本人能看。
+    """
+    attempt = SignupAttempt.query.filter_by(token=token).first()
+    if attempt is None or attempt.user_id != current_user.id:
+        abort(404)
+    return render_template(
+        "registrations/result.html",
+        attempt=attempt,
+        activity=attempt.activity,
+    )
 
 
 @registrations_bp.route("/activities/<int:activity_id>/cancel-signup", methods=["POST"])
